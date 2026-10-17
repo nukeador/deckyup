@@ -141,9 +141,7 @@ class Pages(unittest.TestCase):
             },
             doc.metas,
         )
-        self.assertIn(
-            {"name": "twitter:card", "content": "summary_large_image"}, doc.metas
-        )
+        self.assertIn({"name": "twitter:card", "content": "summary_large_image"}, doc.metas)
         self.assertEqual(
             (self.output / "favicon.svg").read_bytes(),
             (ROOT / "site/favicon.svg").read_bytes(),
@@ -273,9 +271,7 @@ class Pages(unittest.TestCase):
             self.assertIn('href="../favicon.svg"', markup)
             self.assertIn('href="../favicon-32.png"', markup)
             self.assertIn('href="../favicon.ico"', markup)
-            self.assertEqual(
-                markup.count("var _paq = (window._paq = window._paq || []);"), 1
-            )
+            self.assertEqual(markup.count("var _paq = (window._paq = window._paq || []);"), 1)
             self.assertIn('_paq.push(["trackPageView"]);', markup)
             self.assertIn('_paq.push(["enableLinkTracking"]);', markup)
             self.assertIn('var u = "//stats.nukeador.com/";', markup)
@@ -307,9 +303,7 @@ class Pages(unittest.TestCase):
                     self.assertTrue((page.parent / link).exists(), f"{code}: {link}")
             self.assertEqual(markup.count('rel="alternate"'), 11)
         root_markup = (self.output / "index.html").read_text()
-        self.assertEqual(
-            root_markup.count("var _paq = (window._paq = window._paq || []);"), 1
-        )
+        self.assertEqual(root_markup.count("var _paq = (window._paq = window._paq || []);"), 1)
         self.assertEqual(len(list(self.output.glob("**/install.zip"))), 1)
 
     def test_missing_translation_fails_instead_of_silently_showing_english(self):
