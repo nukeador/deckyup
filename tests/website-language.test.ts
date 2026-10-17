@@ -13,11 +13,15 @@ test("website recognizes regional and script variants without inventing unsuppor
   for (const [tag, expected] of [
     ["ES_mx", "es"],
     ["zh-Hans-CN", "zh"],
+    ["pt-BR", "pt"],
     ["pt-PT", "pt"],
+    ["pt-AO", "pt"],
+    ["pt_MZ", "pt"],
     ["ja-JP", "ja"],
     ["EN-us", "en"],
   ]) {
     assert.equal(preferredLocale(null, [tag], supported), expected);
   }
+  assert.equal(preferredLocale("pt-PT", ["en"], supported), "pt");
   assert.equal(preferredLocale("en", ["es"], supported), "en");
 });

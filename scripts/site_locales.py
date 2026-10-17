@@ -12,7 +12,7 @@ LOCALES = {
     "zh": ("zh-Hans", "简体中文"),
     "ru": ("ru", "Русский"),
     "es": ("es", "Español"),
-    "pt": ("pt-BR", "Português (Brasil)"),
+    "pt": ("pt", "Português"),
     "de": ("de", "Deutsch"),
     "ja": ("ja", "日本語"),
     "fr": ("fr", "Français"),
