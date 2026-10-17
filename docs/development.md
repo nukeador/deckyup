@@ -97,7 +97,7 @@ Integration was checked against the [official template](https://github.com/Steam
 
 ## License
 
-MIT. See [LICENSE](../LICENSE). The private HTML parser is vendored from CPython 3.11.14 because Decky does not bundle `html.parser`; its Python license is included in `direct_updater/_html/LICENSE`.
+GNU Affero General Public License v3.0 only (AGPL-3.0-only). See [LICENSE](../LICENSE). The private HTML parser is vendored from CPython 3.11.14 because Decky does not bundle `html.parser`; its Python license is included in `direct_updater/_html/LICENSE`.
 
 
 ## Choose another version and background indicator

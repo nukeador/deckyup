@@ -36,4 +36,6 @@ Plugins need a compatible ZIP release on GitHub. Plugins without one, such as St
 
 [Latest release](https://github.com/nukeador/decky-direct-updater/releases/latest) · [Testing and troubleshooting](docs/steam-deck-testing.md) · [Development](docs/development.md)
 
-Independent community project, not affiliated with Decky Loader. [MIT license](LICENSE).
+Independent community project, not affiliated with Decky Loader. [GNU AGPL v3 license](LICENSE).
+
+Copyright © 2026 nukeador. Third-party code retains its own license notices.

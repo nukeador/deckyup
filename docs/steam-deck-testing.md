@@ -64,7 +64,7 @@ These are explicit development builds with a fixed local data reader. No local H
 5. Press **Update** for **Decky Direct Updater**. Verify Decky's native prompt shows the correct plugin, version 0.1.1 and an update action. **Cancel** it. Reopen the panel and check again: installed version must remain 0.1.0; the updater must not claim success. The Update button must remain usable.
 6. Press **Update** again and **accept**. The updater may unload itself. Wait for Decky to reload it, then reopen QAM and verify **Installed: 0.1.1** and **Up to date**. Do not depend on the previous frontend instance remaining active.
 7. Recheck the saved source mapping and optional marker in the persistent settings file. Both should remain. Check logs for errors.
-8. Reinstall the normal production `Decky-Direct-Updater.zip` through Decky after the experiment; it is version 0.1.0, so this is a deliberate manual reinstall/downgrade. Remove the `local-fixture` runtime subdirectory when finished. The normal ZIP cannot read those fixtures.
+8. Reinstall the normal production `Decky-Direct-Updater.zip` through Decky after the experiment; use its actual release version when deciding whether this is an upgrade, reinstall or downgrade. Remove the `local-fixture` runtime subdirectory when finished. The normal ZIP cannot read those fixtures.
 
 To repeat, reinstall the 0.1.0 fixture ZIP manually. Never publish these fixture ZIPs or their fake release response. Fixture files are absent from the production ZIP and release workflow inputs.
 

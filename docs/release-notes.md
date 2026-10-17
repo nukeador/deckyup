@@ -10,14 +10,10 @@ https://github.com/nukeador/decky-direct-updater/releases/latest/download/Decky-
 
 Or download **Decky-Direct-Updater.zip** below and use **Install Plugin from ZIP**.
 
-### Included
+### v0.1.2
 
-- Automatic source discovery from plugin metadata and the official Decky plugin database.
-- Repository suggestions on the main screen, marked with a question icon and confirmed with **Use this source**.
-- Stable update checks at startup and every four hours, with a green dot on Direct Updater's icon.
-- A version picker for prereleases and older versions, with an explicit downgrade warning.
-- Updates for Direct Updater itself through the same confirmation flow.
+The project is now licensed under **GNU AGPL v3** (`AGPL-3.0-only`). The installable ZIP includes the full license. Vendored Python code retains its original license and copyright notices.
 
-Updates always require your approval. A plugin needs a compatible GitHub release ZIP; otherwise use the Decky Store.
+All features from v0.1.1 remain available: automatic source discovery, repository suggestions, stable update checks, the version picker and self-updates.
 
-Local validation: Python/frontend tests, types, formatting, build and package validation. Physical controller behavior, virtual keyboard and native downgrade confirmation still need broader Steam Deck testing.
+Updates always require your approval.
