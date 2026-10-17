@@ -200,3 +200,41 @@ test("reopening rescans local inventory, discovers new plugins and removes unins
   assert.equal(checks, 3);
   store.dispose();
 });
+
+test("opening after suspension uses wall time and bypasses cache only when due", async () => {
+  let time = 1000;
+  const forces: boolean[] = [];
+  let fail = false;
+  const store = createUpdateStore({
+    now: () => time,
+    list: async () => [plugin("unchecked")],
+    check: async (force) => {
+      forces.push(force);
+      if (fail) throw new Error("Offline");
+      return [plugin("current")];
+    },
+    listen: () => () => {},
+    schedule: () => () => {},
+  });
+  store.start();
+  await tick();
+  time += CHECK_INTERVAL - 1;
+  await store.refreshIfDue();
+  assert.deepEqual(forces, [false]);
+  time += 2;
+  fail = true;
+  await Promise.all([store.refreshIfDue(), store.refreshIfDue()]);
+  assert.deepEqual(forces, [false, true]);
+  await store.refreshIfDue();
+  assert.equal(forces.length, 2);
+  time += 60_000;
+  fail = false;
+  await store.refreshIfDue();
+  assert.deepEqual(forces, [false, true, true]);
+  await store.refreshIfDue();
+  assert.equal(forces.length, 3);
+  store.dispose();
+  time += CHECK_INTERVAL;
+  await store.refreshIfDue();
+  assert.equal(forces.length, 3);
+});

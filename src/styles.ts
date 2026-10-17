@@ -9,7 +9,9 @@ export const styles = `
 .ddu-icon-button { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 32px; border-radius: 3px; cursor: pointer; }
 .ddu-icon-button[aria-disabled="true"] { opacity: .6; }
 .ddu-tabs { display: flex; flex: 1; min-width: 0; gap: 2px; padding: 2px; background: var(--gpBackground-DarkSoft, #171d25); border-radius: 3px; }
-.ddu-tab { flex: 1; padding: 7px 4px; text-align: center; font-weight: 500; cursor: pointer; border-radius: 2px; }
+.ddu-tab { display: flex; align-items: center; justify-content: center; gap: 4px; flex: 1 1 0; min-width: 0; padding: 7px 4px; text-align: center; font-weight: 500; cursor: pointer; border-radius: 2px; white-space: nowrap; }
+.ddu-tab-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ddu-tab-count { flex-shrink: 0; }
 .ddu-tab[aria-selected="true"] { background: var(--gpBackground-LightMedium, #3d4450); color: var(--gpSystemLightestGrey, #fff); }
 .ddu-list { overflow-y: auto; flex: 1; min-height: 0; padding: 2px 8px; overscroll-behavior: contain; }
 .ddu-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 56px; padding: 8px; border-radius: 2px; cursor: pointer; }
@@ -43,7 +45,12 @@ export const styles = `
 .ddu-detail-status { margin: 12px 0; line-height: 1.5; overflow-wrap: anywhere; }
 .ddu-actions { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
 .ddu-actions > * { min-width: 0 !important; width: 100%; font-size: .875rem; padding: 8px 12px; white-space: normal; overflow-wrap: anywhere; }
+.ddu-actions > button, .ddu-actions > div > button { width: 100% !important; min-width: 0 !important; }
+.ddu-actions > div { width: 100%; }
+.ddu-action-label { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+.ddu-action-label svg { flex-shrink: 0; }
 .ddu-release { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 48px; margin: 3px 0; border-radius: 3px; background: var(--gpBackground-DarkSoft, #171d25); cursor: pointer; overflow-wrap: anywhere; }
+.ddu-release-progress { display: flex; align-items: center; gap: 12px; padding: 12px; margin: 8px 0; border-radius: 4px; background: var(--gpBackground-LightMedium, #3d4450); }
 .ddu-release-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
 .ddu-release-arrow { flex-shrink: 0; width: 12px; height: 12px; }
 .ddu-release.ddu-focused, .ddu-release:focus-visible, .ddu-release[aria-disabled="false"]:hover { background: var(--gpBackground-LightMedium, #3d4450); }

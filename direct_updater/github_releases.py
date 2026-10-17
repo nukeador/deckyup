@@ -317,7 +317,7 @@ def _identity(value):
 def _matches_asset(plugin, filename, tag):
     if not filename.lower().endswith(".zip"):
         return False
-    stem = re.sub(r"(?:[-_]?v)?\d+\.\d+\.\d+.*$", "", filename[:-4], flags=re.I)
+    stem = re.sub(r"(?:[-_]?v)?\d+\.\d+(?:\.\d+)?(?:[-+].*)?$", "", filename[:-4], flags=re.I)
     words = set(re.findall(r"[a-z0-9]+", stem.lower()))
     if words & {"source", "src", "sources", "sourcecode", "master", "main"}:
         return False

@@ -93,6 +93,24 @@ export function emptyMessage(
     return "Everything is up to date.";
   return "No confirmed updates. See All for plugin status.";
 }
+
+/** An empty Updates view can mean all checked or merely no confirmed updates. */
+export function emptyUpdatesState(
+  plugins: InstalledPlugin[],
+  loading: boolean,
+  failed: boolean,
+) {
+  if (
+    loading ||
+    failed ||
+    plugins.length === 0 ||
+    visiblePlugins(plugins, "updates").length
+  )
+    return null;
+  return plugins.every((plugin) => plugin.status === "current")
+    ? "current"
+    : "unconfirmed";
+}
 export interface Bookmark {
   selectedId: string | null;
   scrollTop: number;

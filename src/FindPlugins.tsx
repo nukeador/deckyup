@@ -1,3 +1,4 @@
+import { useT } from "./i18n";
 import { DialogButton, Focusable, TextField, Navigation } from "@decky/ui";
 import {
   useEffect,
@@ -32,6 +33,7 @@ export function FindPlugins({
   checkInstallation: () => Promise<boolean>;
   cancelInstallation: () => Promise<void>;
 }) {
+  const t = useT();
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const [selected, setSelected] = useState<Repository | null>(null);
   const [detail, setDetail] = useState<RepositoryDetails | null>(null);
@@ -152,7 +154,7 @@ export function FindPlugins({
         onActivate={back}
         onClick={back}
       >
-        <FaArrowLeft /> {row ? "Back" : "Find Plugins"}
+        <FaArrowLeft /> {row ? t("Back") : t("Find Plugins")}
       </Focusable>
       <NavigationGroup
         className="ddu-main"
@@ -161,7 +163,7 @@ export function FindPlugins({
       >
         <NavigationGroup className="ddu-find-input" flow-children="column">
           <TextField
-            label="Search GitHub"
+            label={t("Search GitHub")}
             value={state.query}
             onChange={(event) => store.type(event.target.value)}
             onKeyDown={(event) => {
@@ -175,15 +177,15 @@ export function FindPlugins({
             disabled={state.loading && state.query.trim() === state.submitted}
             onClick={() => void store.submit()}
           >
-            <FaSearch /> Search
+            <FaSearch /> {t("Search")}
           </DialogButton>
         </NavigationGroup>
         <div className="ddu-notice">
           {state.loading
-            ? "Searching GitHub…"
+            ? t("Searching GitHub…")
             : state.submitted
-              ? "Relevant matches · most starred first"
-              : "Enter a plugin name or owner/repository."}
+              ? t("Relevant matches")
+              : t("Search hint")}
         </div>
         {state.error && (
           <div role="status" className="ddu-notice">
@@ -194,7 +196,7 @@ export function FindPlugins({
           ref={listRef}
           className="ddu-list"
           flow-children="column"
-          aria-label="GitHub repositories"
+          aria-label={t("GitHub repositories")}
           aria-busy={state.loading}
         >
           {state.results.slice(0, state.visible).map((item) => (
@@ -210,15 +212,15 @@ export function FindPlugins({
               focusClassName="ddu-focused"
               onActivate={() => void select(item)}
               onClick={() => void select(item)}
-              onOKActionDescription="Details"
+              onOKActionDescription={t("Details")}
             >
               <span className="ddu-row-text">
                 <span className="ddu-name">{item.name}</span>
                 <span className="ddu-subtitle">
                   {item.owner}
-                  {item.fork ? " · Fork" : ""}
-                  {item.archived ? " · Archived" : ""}
-                  {item.disabled ? " · Disabled" : ""}
+                  {item.fork ? ` · ${t("Fork")}` : ""}
+                  {item.archived ? ` · ${t("Archived")}` : ""}
+                  {item.disabled ? ` · ${t("Disabled")}` : ""}
                   {item.description ? ` · ${item.description}` : ""}
                 </span>
               </span>
@@ -229,7 +231,7 @@ export function FindPlugins({
             state.submitted &&
             !state.results.length &&
             !state.error && (
-              <div className="ddu-empty">No repositories found.</div>
+              <div className="ddu-empty">{t("No repositories found.")}</div>
             )}
           {(state.visible < state.results.length || state.next) && (
             <div className="ddu-actions">
@@ -237,7 +239,7 @@ export function FindPlugins({
                 disabled={state.loading}
                 onClick={() => void store.more()}
               >
-                Show more
+                {t("Show more")}
               </DialogButton>
             </div>
           )}
@@ -248,19 +250,19 @@ export function FindPlugins({
           <h2>{row.name}</h2>
           <div>
             {row.owner} · ★ {formatStars(row.stars)}
-            {row.fork ? " · Fork" : ""}
+            {row.fork ? ` · ${t("Fork")}` : ""}
           </div>
           <p className="ddu-source">{row.description}</p>
           {!detail && !message && (
-            <div role="status">Checking compatibility…</div>
+            <div role="status">{t("Checking compatibility…")}</div>
           )}
           {detail?.version && (
             <dl className="ddu-versions">
-              <dt>Latest Decky release</dt>
+              <dt>{t("Latest Decky release")}</dt>
               <dd>{detail.version}</dd>
               {detail.installed_version && (
                 <>
-                  <dt>Installed</dt>
+                  <dt>{t("Installed")}</dt>
                   <dd>{detail.installed_version}</dd>
                 </>
               )}
@@ -269,7 +271,7 @@ export function FindPlugins({
           {detail?.error && <p role="status">{detail.error}</p>}
           {message && (
             <p className="ddu-detail-status" role="status">
-              {message}
+              {t(message)}
             </p>
           )}
           <NavigationGroup className="ddu-actions" flow-children="column">
@@ -291,12 +293,12 @@ export function FindPlugins({
               }
             >
               {detail?.status === "update"
-                ? "Update"
+                ? t("Update")
                 : detail?.status === "current"
-                  ? "Up to date"
+                  ? t("Up to date")
                   : detail?.status === "version_unavailable"
-                    ? "Version unavailable"
-                    : "Install"}
+                    ? t("Version unavailable")
+                    : t("Install")}
             </DialogButton>
             {requested && (
               <>
@@ -318,7 +320,7 @@ export function FindPlugins({
                     })
                   }
                 >
-                  Check installation
+                  {t("Check installation")}
                 </DialogButton>
                 <DialogButton
                   disabled={busy}
@@ -332,13 +334,13 @@ export function FindPlugins({
                     })
                   }
                 >
-                  I cancelled in Decky
+                  {t("I cancelled in Decky")}
                 </DialogButton>
               </>
             )}
             {detail?.error && (
               <DialogButton disabled={busy} onClick={() => void select(row)}>
-                Retry
+                {t("Retry")}
               </DialogButton>
             )}
             <DialogButton
@@ -348,7 +350,7 @@ export function FindPlugins({
                 )
               }
             >
-              View on GitHub
+              {t("View on GitHub")}
             </DialogButton>
           </NavigationGroup>
         </NavigationGroup>

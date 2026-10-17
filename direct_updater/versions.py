@@ -1,10 +1,10 @@
-"""Strict SemVer comparison with common release tag prefixes."""
+"""SemVer comparison with common release prefixes and two-part tags."""
 
 import re
 from functools import total_ordering
 
 _PATTERN = re.compile(
-    r"^(?:plugin-)?[vV]?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"^(?:plugin-)?[vV]?(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?"
     r"(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$"
 )
 
@@ -15,7 +15,7 @@ class Version:
         match = _PATTERN.fullmatch(str(value).strip())
         if not match:
             raise ValueError("Version is not valid semantic versioning")
-        self.core = tuple(int(match[i]) for i in (1, 2, 3))
+        self.core = (int(match[1]), int(match[2]), int(match[3] or 0))
         self.pre = tuple(match[4].split(".")) if match[4] else ()
         for part in self.pre:
             if not part or (part.isdigit() and len(part) > 1 and part[0] == "0"):

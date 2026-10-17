@@ -94,6 +94,40 @@ export async function reopenAfterSelfUpdate(
   }
 }
 
+/** Keep checking until Loader reports the replacement version or this mount ends. */
+export function watchSelfUpdate(
+  installed: () => Promise<{ name: string; version?: string }[]>,
+  navigation: {
+    CloseSideMenus(): void;
+    OpenQuickAccessMenu(tab: number): void;
+  },
+): () => void {
+  let active = true;
+  let checking = false;
+  const check = async () => {
+    if (!active || checking || !session()?.getItem(SELF_REOPEN_KEY)) return;
+    checking = true;
+    try {
+      await reopenAfterSelfUpdate(installed, {
+        CloseSideMenus: () => {
+          if (active) navigation.CloseSideMenus();
+        },
+        OpenQuickAccessMenu: (tab) => {
+          if (active) navigation.OpenQuickAccessMenu(tab);
+        },
+      });
+    } finally {
+      checking = false;
+    }
+  };
+  void check();
+  const timer = setInterval(() => void check(), 2000);
+  return () => {
+    active = false;
+    clearInterval(timer);
+  };
+}
+
 function loaderRouter(): Router | undefined {
   return typeof window === "undefined"
     ? undefined

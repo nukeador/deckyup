@@ -116,6 +116,13 @@ class ManualSelection(Workspace):
         )
         self.assertIn("Multiple", release_option(plugin, ambiguous)["reason"])
 
+    def test_two_component_prefixed_release_is_installable(self):
+        plugin = self.app.plugin("updater")
+        option = release_option(plugin, release("1.17"))
+        self.assertTrue(option["installable"])
+        self.assertEqual(option["version"], "1.17.0")
+        self.assertFalse(option["downgrade"])
+
     def test_manual_staging_rejects_mismatching_zip_identity_and_version(self):
         self.app.list_releases("updater")
         # Use the real generic staging path, including download and ZIP verification.

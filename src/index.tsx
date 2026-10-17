@@ -3,6 +3,7 @@ import {
   removeEventListener,
   callable,
   definePlugin,
+  useQuickAccessVisible,
 } from "@decky/api";
 import { Focusable, Navigation, Spinner } from "@decky/ui";
 import {
@@ -17,7 +18,7 @@ import { FaDownload, FaSyncAlt, FaSearch, FaCheck } from "react-icons/fa";
 import {
   requestUpdate,
   requestSelfUpdate,
-  reopenAfterSelfUpdate,
+  watchSelfUpdate,
   listenForInstallCompletion,
   type StagedUpdate,
 } from "./deckyInstaller";
@@ -36,8 +37,10 @@ import {
   type RepositoryDetails,
 } from "./findStore";
 import { styles } from "./styles";
+import { LanguageProvider, useT } from "./i18n";
 import {
   emptyMessage,
+  emptyUpdatesState,
   initialNavigation,
   navigate,
   restoreBookmark,
@@ -102,6 +105,7 @@ function Content({
   finder: FindStore;
   finderActions: FinderActions;
 }) {
+  const t = useT();
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const { plugins, checking: refreshing, error: checkError } = snapshot;
   const loadFailed = Boolean(checkError);
@@ -246,6 +250,10 @@ function Content({
   }
 
   const updates = plugins.filter((plugin) => plugin.status === "update").length;
+  const emptyState =
+    navigation.view === "updates"
+      ? emptyUpdatesState(plugins, refreshing, loadFailed)
+      : null;
   return (
     <NavigationGroup ref={rootRef} className="ddu" flow-children="column">
       <style>{styles}</style>
@@ -259,7 +267,7 @@ function Content({
             flow-children="row"
             className="ddu-tabs"
             role="tablist"
-            aria-label="Plugin views"
+            aria-label={t("Plugin views")}
           >
             {(["updates", "all"] as const).map((view) => (
               <Focusable
@@ -273,9 +281,15 @@ function Content({
                 onActivate={() => changeView(view)}
                 onClick={() => changeView(view)}
               >
-                {view === "updates"
-                  ? `Updates (${updates})`
-                  : `All (${plugins.length})`}
+                <span
+                  className="ddu-tab-label"
+                  title={view === "updates" ? t("Updates") : t("All")}
+                >
+                  {view === "updates" ? t("Updates") : t("All")}
+                </span>
+                <span className="ddu-tab-count">
+                  ({view === "updates" ? updates : plugins.length})
+                </span>
               </Focusable>
             ))}
           </NavigationGroup>
@@ -285,10 +299,10 @@ function Content({
             tabIndex={0}
             className="ddu-icon-button"
             focusClassName="ddu-focused"
-            aria-label="Find Plugins"
+            aria-label={t("Find Plugins")}
             onActivate={() => setFinding(true)}
             onClick={() => setFinding(true)}
-            onOKActionDescription="Find Plugins"
+            onOKActionDescription={t("Find Plugins")}
           >
             <FaSearch aria-hidden="true" />
           </Focusable>
@@ -297,7 +311,9 @@ function Content({
             tabIndex={0}
             className="ddu-icon-button"
             focusClassName="ddu-focused"
-            aria-label={refreshing ? "Checking for updates" : "Refresh updates"}
+            aria-label={
+              refreshing ? t("Checking for updates") : t("Refresh updates")
+            }
             aria-disabled={refreshing}
             onActivate={() => {
               if (!refreshing) void refresh(true);
@@ -305,7 +321,7 @@ function Content({
             onClick={() => {
               if (!refreshing) void refresh(true);
             }}
-            onOKActionDescription="Refresh"
+            onOKActionDescription={t("Refresh")}
           >
             {refreshing ? (
               <Spinner style={{ width: 18, height: 18 }} />
@@ -324,7 +340,7 @@ function Content({
           <div className="ddu-notice" role="status">
             {plugins.find((plugin) => plugin.id === rowActionId)?.name}:{" "}
             {working === rowActionId
-              ? "Preparing update…"
+              ? t("Preparing update…")
               : messages[rowActionId]}
           </div>
         )}
@@ -335,8 +351,8 @@ function Content({
           className="ddu-list"
           aria-label={
             navigation.view === "updates"
-              ? "Updates and sources to review"
-              : "Installed plugins"
+              ? t("Updates and sources to review")
+              : t("Installed plugins")
           }
           aria-busy={refreshing}
         >
@@ -376,32 +392,19 @@ function Content({
               }
             />
           ))}
-          {!visible.length &&
-            navigation.view === "updates" &&
-            !refreshing &&
-            !loadFailed &&
-            plugins.length > 0 &&
-            plugins.every((plugin) => plugin.status === "current") && (
-              <div className="ddu-success-empty" role="status">
-                <div className="ddu-success-icon" aria-hidden="true">
-                  <FaCheck />
-                </div>
-                <strong>You're up to date</strong>
-                <span>All your plugins are on their latest versions.</span>
+          {!visible.length && emptyState && (
+            <div className="ddu-success-empty" role="status">
+              <div className="ddu-success-icon" aria-hidden="true">
+                <FaCheck />
               </div>
-            )}
-          {!visible.length &&
-            !(
-              navigation.view === "updates" &&
-              !refreshing &&
-              !loadFailed &&
-              plugins.length > 0 &&
-              plugins.every((plugin) => plugin.status === "current")
-            ) && (
-              <div className="ddu-empty" role="status">
-                {emptyMessage(plugins, refreshing, loadFailed)}
-              </div>
-            )}
+              <strong>{t("You're up to date")}</strong>
+            </div>
+          )}
+          {!visible.length && !emptyState && (
+            <div className="ddu-empty" role="status">
+              {t(emptyMessage(plugins, refreshing, loadFailed))}
+            </div>
+          )}
         </NavigationGroup>
       </NavigationGroup>
       <FindPlugins
@@ -509,6 +512,11 @@ function Content({
 }
 
 function UpdateIcon({ store }: { store: UpdateStore }) {
+  const t = useT();
+  const quickAccessVisible = useQuickAccessVisible();
+  useEffect(() => {
+    if (quickAccessVisible) void store.refreshIfDue();
+  }, [store, quickAccessVisible]);
   const { hasUpdates } = useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
@@ -529,7 +537,7 @@ function UpdateIcon({ store }: { store: UpdateStore }) {
       {hasUpdates && (
         <span
           role="status"
-          aria-label="Stable updates available"
+          aria-label={t("Stable updates available")}
           style={{
             position: "absolute",
             top: -3,
@@ -575,15 +583,23 @@ export default definePlugin(() => {
     void finderActions.check(name).catch(() => {});
   });
   store.start();
-  void reopenAfterSelfUpdate(list, Navigation);
+  const checkWhenDue = () => void store.refreshIfDue();
+  window.addEventListener("online", checkWhenDue);
+  window.addEventListener("focus", checkWhenDue);
+  const stopSelfUpdateWatch = watchSelfUpdate(list, Navigation);
   return {
     name: "Decky Direct Updater",
     titleView: <div>Direct Updater</div>,
     content: (
-      <Content store={store} finder={finder} finderActions={finderActions} />
+      <LanguageProvider>
+        <Content store={store} finder={finder} finderActions={finderActions} />
+      </LanguageProvider>
     ),
     icon: <UpdateIcon store={store} />,
     onDismount() {
+      window.removeEventListener("online", checkWhenDue);
+      window.removeEventListener("focus", checkWhenDue);
+      stopSelfUpdateWatch();
       finderActions.dispose();
       stopInstallListener();
       finder.dispose();

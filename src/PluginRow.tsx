@@ -1,3 +1,4 @@
+import { useT } from "./i18n";
 import { Focusable, Spinner } from "@decky/ui";
 import {
   FaCheck,
@@ -39,6 +40,7 @@ export function PluginRow({
   onFocus: () => void;
   register: (element: HTMLDivElement | null) => void;
 }) {
+  const t = useT();
   const status = pluginStatus(plugin);
   const Icon = icons[status.icon];
   const canUpdate = pluginActions(plugin).update;
@@ -54,12 +56,16 @@ export function PluginRow({
         onClick={onOpen}
         onFocus={onFocus}
         onGamepadFocus={onFocus}
-        onOKActionDescription="Details"
-        aria-label={`${plugin.name}. ${status.subtitle}. Details`}
+        onOKActionDescription={t("Details")}
+        aria-label={`${plugin.name}. ${plugin.version || t("Unknown version")} · ${t(status.label)}. ${t("Details")}`}
       >
         <span className="ddu-row-text">
           <span className="ddu-name">{plugin.name}</span>
-          <span className="ddu-subtitle">{status.subtitle}</span>
+          <span className="ddu-subtitle">
+            {plugin.status === "update" && plugin.latest
+              ? `${plugin.version || t("Unknown version")} → ${plugin.latest}`
+              : `${plugin.version || t("Unknown version")} · ${t(status.label)}`}
+          </span>
         </span>
         {!canUpdate && <Icon className="ddu-status-icon" aria-hidden="true" />}
       </Focusable>
@@ -70,7 +76,7 @@ export function PluginRow({
           tabIndex={0}
           className="ddu-quick-update"
           focusClassName="ddu-focused"
-          aria-label={`Update ${plugin.name}`}
+          aria-label={`${t("Update")} ${plugin.name}`}
           aria-disabled={busy}
           aria-busy={updating}
           onFocus={onUpdateFocus}
@@ -81,7 +87,7 @@ export function PluginRow({
           onClick={() => {
             if (!busy) onUpdate();
           }}
-          onOKActionDescription="Update"
+          onOKActionDescription={t("Update")}
         >
           {updating ? (
             <Spinner style={{ width: 18, height: 18 }} />

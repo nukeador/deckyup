@@ -1,4 +1,5 @@
-import { DialogButton, Focusable } from "@decky/ui";
+import { useT } from "./i18n";
+import { DialogButton, Focusable, Spinner } from "@decky/ui";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaArrowLeft, FaChevronRight } from "react-icons/fa";
 import { NavigationGroup } from "./NavigationGroup";
@@ -46,11 +47,15 @@ export function ReleaseSelector({
   install: (release: ReleaseOption, confirmed: boolean) => Promise<void>;
   onBack: () => void;
 }) {
+  const t = useT();
   const [releases, setReleases] = useState<ReleaseOption[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [warning, setWarning] = useState<ReleaseOption | null>(null);
+  const [pendingRelease, setPendingRelease] = useState<string | number | null>(
+    null,
+  );
   const mounted = useRef(true);
   const inFlight = useRef(false);
   const back = useRef<HTMLDivElement>(null);
@@ -133,12 +138,22 @@ export function ReleaseSelector({
     setWarning(null);
   }
   function choose(release: ReleaseOption) {
-    if (!release.installable || busy || loading) return;
+    if (!release.installable || busy || loading || pendingRelease !== null)
+      return;
     returnTo.current = release.release_id;
     if (release.downgrade) {
       warningScroll.current = container.current?.scrollTop || 0;
       setWarning(release);
-    } else void install(release, false);
+    } else void startInstall(release, false);
+  }
+  async function startInstall(release: ReleaseOption, confirmed: boolean) {
+    if (pendingRelease !== null || busy) return;
+    setPendingRelease(release.release_id);
+    try {
+      await install(release, confirmed);
+    } finally {
+      if (mounted.current) setPendingRelease(null);
+    }
   }
   return (
     <NavigationGroup
@@ -151,7 +166,7 @@ export function ReleaseSelector({
         if (warning) cancelWarning();
         else onBack();
       }}
-      onCancelActionDescription="Back"
+      onCancelActionDescription={t("Back")}
       key={identity}
     >
       <Focusable
@@ -163,50 +178,57 @@ export function ReleaseSelector({
         onActivate={warning ? cancelWarning : onBack}
         onClick={warning ? cancelWarning : onBack}
       >
-        <FaArrowLeft aria-hidden="true" /> Back
+        <FaArrowLeft aria-hidden="true" /> {t("Back")}
       </Focusable>
-      <h2>{plugin.name}: Install another version</h2>
-      <p>Installed: {plugin.version}</p>
-      <p className="ddu-footnote">
-        Prereleases may be unstable. Selecting one does not change future update
-        checks, which continue to use stable releases.
+      <h2>
+        {plugin.name}: {t("Install another version")}
+      </h2>
+      <p>
+        {t("Installed")}: {plugin.version}
       </p>
+      <p className="ddu-footnote">{t("Prerelease notice")}</p>
       {warning ? (
         <NavigationGroup
           ref={warningRef}
           flow-children="column"
           role="alertdialog"
-          aria-label="Confirm downgrade"
+          aria-label={t("Confirm downgrade")}
           className="ddu-actions"
         >
           <h3>
-            Downgrade from {plugin.version} to {warning.version}?
+            {t("Downgrade from")} {plugin.version} {t("to")} {warning.version}?
           </h3>
-          <p>
-            Older versions may not understand your current settings. Confirm
-            before preparing this ZIP. Decky will also ask you to approve the
-            installation.
-          </p>
+          <p>{t("Downgrade warning")}</p>
           <DialogButton
-            disabled={busy}
+            disabled={busy || pendingRelease !== null}
             onClick={() => {
               const selected = warning;
               cancelWarning();
-              void install(selected, true);
+              void startInstall(selected, true);
             }}
           >
-            Confirm downgrade
+            {t("Confirm downgrade")}
           </DialogButton>
           <DialogButton disabled={busy} onClick={cancelWarning}>
-            Cancel
+            {t("Cancel")}
           </DialogButton>
         </NavigationGroup>
       ) : (
         <>
+          {pendingRelease !== null && (
+            <div
+              className="ddu-release-progress"
+              role="status"
+              aria-live="polite"
+            >
+              <Spinner style={{ width: 22, height: 22 }} />
+              <span>{t("Preparing ZIP…")}</span>
+            </div>
+          )}
           <NavigationGroup
             flow-children="column"
-            aria-label="Plugin releases"
-            aria-busy={loading}
+            aria-label={t("Plugin releases")}
+            aria-busy={loading || pendingRelease !== null}
           >
             {releases.map((release) => (
               <Focusable
@@ -219,33 +241,40 @@ export function ReleaseSelector({
                 focusClassName="ddu-focused"
                 role="button"
                 tabIndex={0}
-                aria-disabled={!release.installable || busy || loading}
+                aria-disabled={
+                  !release.installable ||
+                  busy ||
+                  loading ||
+                  pendingRelease !== null
+                }
                 onActivate={() => choose(release)}
                 onClick={() => choose(release)}
               >
                 <span className="ddu-release-text">
                   <span>
                     {release.version || release.tag}
-                    {release.prerelease ? " · Prerelease" : ""}
-                    {release.installed ? " · Installed" : ""}
+                    {release.prerelease ? ` · ${t("Prerelease")}` : ""}
+                    {release.installed ? ` · ${t("Installed")}` : ""}
                   </span>
                   {release.reason && !release.installed && (
-                    <small>{release.reason}</small>
+                    <small>{t(release.reason)}</small>
                   )}
                 </span>
-                {release.installable && (
+                {pendingRelease === release.release_id ? (
+                  <Spinner style={{ width: 18, height: 18, flexShrink: 0 }} />
+                ) : release.installable ? (
                   <FaChevronRight
                     className="ddu-release-arrow"
                     aria-hidden="true"
                   />
-                )}
+                ) : null}
               </Focusable>
             ))}
           </NavigationGroup>
           {!loading && !error && !releases.length && (
-            <p>No published GitHub releases.</p>
+            <p>{t("No published GitHub releases.")}</p>
           )}
-          {loading && <p role="status">Loading releases…</p>}
+          {loading && <p role="status">{t("Loading releases…")}</p>}
           {error && <p role="alert">{error}</p>}
           <div ref={loadActions} className="ddu-actions">
             {(cursor || error) && (
@@ -253,14 +282,13 @@ export function ReleaseSelector({
                 disabled={loading || busy}
                 onClick={() => void more(cursor)}
               >
-                {error ? "Retry loading releases" : "Load more"}
+                {error ? t("Retry loading releases") : t("Load more")}
               </DialogButton>
             )}
           </div>
         </>
       )}
       {message && <p role="status">{message}</p>}
-      {busy && <p role="status">Preparing ZIP…</p>}
     </NavigationGroup>
   );
 }

@@ -8,6 +8,7 @@ export interface UpdateSnapshot {
   hasUpdates: boolean;
 }
 interface Dependencies {
+  now?: () => number;
   list: () => Promise<InstalledPlugin[]>;
   check: (force: boolean) => Promise<InstalledPlugin[]>;
   listen: (callback: (plugin: InstalledPlugin) => void) => () => void;
@@ -33,6 +34,9 @@ export function createUpdateStore(dependencies: Dependencies) {
   let task: Promise<void> | null = null;
   let stopTimer: (() => void) | undefined;
   let stopListener: (() => void) | undefined;
+  const now = dependencies.now || Date.now;
+  let lastSuccessfulCheck: number | null = null;
+  let lastAttempt: number | null = null;
   function publish(patch: Partial<UpdateSnapshot>) {
     if (!active) return;
     snapshot = { ...snapshot, ...patch, hasUpdates: positives.size > 0 };
@@ -65,6 +69,8 @@ export function createUpdateStore(dependencies: Dependencies) {
   function refresh(force = false): Promise<void> {
     if (!active) return Promise.resolve();
     if (task) return task;
+    const startedAt = now();
+    lastAttempt = startedAt;
     publish({ checking: true, error: "" });
     task = (async () => {
       try {
@@ -99,8 +105,15 @@ export function createUpdateStore(dependencies: Dependencies) {
           /* A check can still recover an unavailable initial inventory. */
         }
         if (!active) return;
-        const plugins = await dependencies.check(force);
-        if (active) accept(plugins, true);
+        const expired =
+          lastSuccessfulCheck !== null &&
+          startedAt - lastSuccessfulCheck >= CHECK_INTERVAL;
+        const plugins = await dependencies.check(force || expired);
+        if (active) {
+          accept(plugins, true);
+          if (!plugins.some((plugin) => plugin.status === "error"))
+            lastSuccessfulCheck = startedAt;
+        }
       } catch (error) {
         publish({ error: String(error).replace(/^Error:\s*/, "") });
       } finally {
@@ -109,6 +122,17 @@ export function createUpdateStore(dependencies: Dependencies) {
       }
     })();
     return task;
+  }
+  function refreshIfDue(): Promise<void> {
+    const time = now();
+    if (
+      lastSuccessfulCheck !== null &&
+      time - lastSuccessfulCheck < CHECK_INTERVAL
+    )
+      return Promise.resolve();
+    if (lastAttempt !== null && time - lastAttempt < 60_000)
+      return task || Promise.resolve();
+    return refresh(true);
   }
   return {
     getSnapshot: () => snapshot,
@@ -119,6 +143,7 @@ export function createUpdateStore(dependencies: Dependencies) {
       };
     },
     refresh,
+    refreshIfDue,
     start() {
       if (started) return;
       started = active = true;
