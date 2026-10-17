@@ -107,7 +107,12 @@ def validate_package(path, name, version, expected_root=None):
                 raise ValueError("Empty frontend")
             if archive.testzip() is not None:
                 raise ValueError("Corrupt ZIP contents")
-            return {"root": root, "version": package["version"], "expanded_size": total}
+            return {
+                "root": root,
+                "version": package["version"],
+                "expanded_size": total,
+                "package_name": package.get("name", ""),
+            }
     except (
         zipfile.BadZipFile,
         KeyError,

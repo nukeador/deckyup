@@ -4,9 +4,17 @@ export interface StagedUpdate {
   name: string;
   version: string;
   hash: string;
-  install_type?: "update" | "downgrade";
+  install_type?: "update" | "downgrade" | "install";
 }
 export interface Router {
+  addEventListener?(
+    event: string,
+    listener: (...args: unknown[]) => void,
+  ): unknown;
+  removeEventListener?(
+    event: string,
+    listener: (...args: unknown[]) => void,
+  ): void;
   call(route: string, ...args: unknown[]): Promise<unknown>;
 }
 export type InstallResult = { requested: boolean; error?: string };
@@ -33,7 +41,7 @@ export async function requestUpdate(
     !update.name ||
     !update.version ||
     (update.install_type !== undefined &&
-      !["update", "downgrade"].includes(update.install_type))
+      !["update", "downgrade", "install"].includes(update.install_type))
   ) {
     return {
       requested: false,
@@ -47,7 +55,11 @@ export async function requestUpdate(
       update.name,
       update.version,
       update.hash,
-      update.install_type === "downgrade" ? 3 : 2,
+      update.install_type === "install"
+        ? 0
+        : update.install_type === "downgrade"
+          ? 3
+          : 2,
     );
     if (
       result === false ||
@@ -62,4 +74,18 @@ export async function requestUpdate(
   } catch {
     return { requested: false, error: fallback };
   }
+}
+
+/** Loader emits this after its installation operation; inventory still decides success. */
+export function listenForInstallCompletion(
+  callback: (name: string) => void,
+  router = loaderRouter(),
+): () => void {
+  if (!router?.addEventListener || !router.removeEventListener) return () => {};
+  const listener = (...args: unknown[]) => {
+    if (typeof args[0] === "string") callback(args[0]);
+  };
+  router.addEventListener("loader/plugin_download_finish", listener);
+  return () =>
+    router.removeEventListener?.("loader/plugin_download_finish", listener);
 }

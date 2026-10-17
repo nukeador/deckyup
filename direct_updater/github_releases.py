@@ -59,20 +59,31 @@ class GitHub:
             if isinstance(saved, dict):
                 self.limits[resource] = saved.get("until", 0)
 
-    def get(self, endpoint, refresh=False):
+    def get(self, endpoint, refresh=False, ttl=CACHE_SECONDS, negative_ttl=None, bounded=False):
         if not endpoint.startswith("/") or endpoint.startswith("//"):
             raise ValueError("Invalid GitHub API endpoint")
         # Serialize cache fills so shared repositories only generate one request.
         with self.lock:
             cached = self.state.get("cache", endpoint)
             now = time.time()
-            if cached and now - cached["time"] < (60 if refresh else CACHE_SECONDS):
+            lifetime = (
+                (negative_ttl or ttl)
+                if cached and (cached.get("not_found") or cached.get("empty"))
+                else ttl
+            )
+            if cached and now - cached["time"] < (60 if refresh else lifetime):
+                logging.getLogger(__name__).debug("GitHub cache hit: %s", endpoint)
                 if cached.get("not_found"):
                     raise GitHubError("GitHub repository or manifest not found")
                 return cached["data"]
             resource = "search" if endpoint.startswith("/search/") else "core"
             if now < self.limits.get(resource, 0):
                 raise self._limit_error(resource)
+            logging.getLogger(__name__).debug(
+                "GitHub %s request: %s",
+                resource if resource == "search" else "repository metadata",
+                endpoint,
+            )
             headers = {
                 "User-Agent": "Decky-Direct-Updater/0.1",
                 "Accept": "application/vnd.github+json",
@@ -94,10 +105,15 @@ class GitHub:
                             "time": now,
                             "etag": response.headers.get("ETag"),
                             "data": data,
+                            "empty": isinstance(data, dict) and data.get("items") == [],
+                            "find_cache": bounded,
                         },
+                        max_find_entries=40 if bounded else None,
                     )
                     return data
             except urllib.error.HTTPError as error:
+                reported = error.headers.get("X-RateLimit-Resource", resource)
+                resource = reported if reported in {"core", "search"} else resource
                 self._rate_headers(error.headers, resource)
                 if error.code == 304 and cached:
                     self.state.put("cache", endpoint, {**cached, "time": now})
@@ -118,7 +134,10 @@ class GitHub:
                     ) from error
                 if error.code == 404:
                     self.state.put(
-                        "cache", endpoint, {"time": now, "data": None, "not_found": True}
+                        "cache",
+                        endpoint,
+                        {"time": now, "data": None, "not_found": True, "find_cache": bounded},
+                        max_find_entries=40 if bounded else None,
                     )
                     raise GitHubError("GitHub repository or manifest not found") from error
                 raise GitHubError(f"GitHub API error ({error.code})") from error
@@ -134,6 +153,7 @@ class GitHub:
                 raise GitHubError(message) from error
 
     def _set_limit(self, resource, until):
+        logging.getLogger(__name__).debug("GitHub rate limit: %s", resource)
         self.limits[resource] = until
         self.state.put("cache", "_rate_" + resource, {"until": until})
 
@@ -144,6 +164,9 @@ class GitHub:
         )
 
     def _rate_headers(self, headers, resource):
+        resource = headers.get("X-RateLimit-Resource", resource)
+        if resource not in {"core", "search"}:
+            return
         try:
             if headers.get("X-RateLimit-Remaining") == "0":
                 self._set_limit(

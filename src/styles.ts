@@ -3,8 +3,10 @@ export const styles = `
 .ddu-main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .ddu * { box-sizing: border-box; }
 .ddu [hidden] { display: none !important; }
-.ddu-toolbar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 12px 8px; }
-.ddu-icon-button { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 3px; cursor: pointer; }
+.ddu-find-input { padding: 0 16px 12px; display: flex; gap: 8px; flex-direction: column; }
+.ddu-stars { flex-shrink: 0; white-space: nowrap; font-size: .8rem; line-height: 1.25rem; }
+.ddu-toolbar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; margin: 0 12px 8px; }
+.ddu-icon-button { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 32px; border-radius: 3px; cursor: pointer; }
 .ddu-icon-button[aria-disabled="true"] { opacity: .6; }
 .ddu-tabs { display: flex; flex: 1; min-width: 0; gap: 2px; padding: 2px; background: var(--gpBackground-DarkSoft, #171d25); border-radius: 3px; }
 .ddu-tab { flex: 1; padding: 7px 4px; text-align: center; font-weight: 500; cursor: pointer; border-radius: 2px; }

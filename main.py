@@ -95,5 +95,29 @@ class Plugin:
         except (ValueError, OSError, ImportError) as error:
             return {"update": None, "error": str(error)}
 
+    async def find_repositories(self, query, page=1):
+        return await self._find_call("search", query, page)
+
+    async def repository_details(self, repository):
+        return await self._find_call("details", repository)
+
+    async def stage_repository(self, token, release_id, asset_id):
+        return await self._find_call("stage", token, release_id, asset_id)
+
+    async def finish_repository(self, ticket, cancelled=False):
+        return await self._find_call("finish", ticket, cancelled is True)
+
+    async def _find_call(self, method, *args):
+        try:
+            return await asyncio.to_thread(getattr(self._ready().finder, method), *args)
+        except (ValueError, OSError, ImportError, TypeError, KeyError) as error:
+            decky.logger.debug("Find Plugins %s failed: %s", method, error)
+            message = (
+                str(error)
+                if isinstance(error, ValueError) and len(str(error)) <= 180
+                else "Could not complete this request. Try again."
+            )
+            return {"error": message}
+
     async def _unload(self):
         pass

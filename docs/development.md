@@ -2,7 +2,7 @@
 
 Keep your Decky plugins up to date directly from their developers.
 
-Decky Direct Updater checks the public GitHub releases of **already installed** plugins from Gaming Mode. It is an optional alternative for following developers' release schedules alongside the curated official Decky Store. This independent community project is not affiliated with the Decky Loader team.
+Decky Direct Updater finds new plugins and checks the public GitHub releases of installed plugins from Gaming Mode. It is an optional alternative for following developers' release schedules alongside the curated official Decky Store. This independent community project is not affiliated with the Decky Loader team.
 
 ## Features
 
@@ -107,3 +107,35 @@ Open a plugin's details and choose **Install another version** to load releases 
 An older version first shows the installed and selected versions and requires **Confirm downgrade** before its ZIP is prepared. Cancel returns to the selected release without staging. After validation, Decky's own confirmation still controls the actual installation. Requests and cancellation are never reported as completed installs. Native downgrade requests use Loader's DOWNGRADE mode; all internal Loader integration remains in src/deckyInstaller.ts.
 
 The green dot at the upper right of Direct Updater's icon in Decky's plugin list means at least one newer stable version has been confirmed. The plugin checks at load and every four hours, sharing one in-flight check and the existing backend cache with the panel. The timer and progress subscription exist even while the panel is closed, and are disposed on unload. Opening the panel or requesting installation does not clear the dot. A valid recheck reads installed versions and clears resolved updates; a failed lookup does not create an update or erase a previous positive for the same installation/source.
+
+## Find Plugins — local 0.1.3 build
+
+Search opens from the small icon immediately before Refresh. The same native keyboard field accepts a name, owner/repo or HTTPS GitHub repository URL. Search runs only on submit. Five compact rows appear first; Show more reveals another five from memory. Repository details and installation stay inside the sidebar. Native focus groups and Back preserve the main tab, result selection and scroll while navigating.
+
+Name submissions call REST `/search/repositories` once per uncached page, with `in:name,description fork:true`, stars descending and 25 results. Local exact/strong name matches precede description matches; ties use stars then repository identity. Rows use only that response; no manifest, release or repository request per row. A direct identifier uses `/repos/owner/repo` instead of search. Disabled and archived repositories remain visible but cannot install. Stars indicate popularity only.
+
+The existing serialized GitHub client handles cache fills, ETags and persistent Core/Search limits, including resource headers and Retry-After. Search/repository entries share its cache, capped at 40 Find entries: positive TTL six hours, empty/404 TTL twenty minutes. Valid cache hits precede rate checks; stale results remain usable when network requests fail. Frontend submissions coalesce identical requests and discard obsolete responses. Only explicit Show more fetches a subsequent page after stored rows are exhausted. Existing automatic update/source-discovery behavior is unchanged.
+
+Selected details read root or nested Decky/package manifests and use the existing stable release/asset resolver and four-hour public metadata cache. No ZIP is downloaded by searching or opening details. Installation revalidates the selection server-side, checks actual installed identity/source, then uses the existing downloader and ZIP validator. New installs also reject folder collisions and package-name mismatches. No frontend URL or path is accepted. Loader modes are INSTALL=0, UPDATE=2; the existing manual downgrade flow stays separate.
+
+`loader/plugin_download_finish` triggers an actual local inventory check; the event alone does not prove success (Loader can emit it after a checksum failure). Only the expected directory, Decky identity, package identity and installed version allow saving the chosen repository as confirmed and refreshing All. Check installation is a manual fallback for Loader versions without that event API. Cancellation clears the pending ticket without saving a source. Pending tickets are runtime-only; unloading/restarting Direct Updater during a native prompt loses that pending association. Existing self-update still uses the generic validated pipeline; after its reload, inventory shows the actual version.
+
+Debug logs distinguish REST search, repository metadata, public release/manifest metadata, cache hits and rate-limit backoff. There is no telemetry or token configuration.
+
+### Measured request budget (mocked tests)
+
+| Scenario | REST requests added by Find Plugins |
+| --- | --- |
+| Unused finder / typing | 0 |
+| First name submission, 25 metadata rows | 1 Search |
+| First five → ten → twenty-five visible rows | 0 additional |
+| Back from details / reopening unchanged search | 0 additional Search |
+| Repeating a cached normalized query | 0 additional |
+| Six concurrent identical backend submissions | 1 total |
+| Direct repo then equivalent GitHub URL | 1 Core total |
+| Explicit next page after 25 rows | 1 additional Search |
+| Search bucket blocked, another uncached search | 0 network retries |
+
+The real compiled frontend was also exercised in a local browser with mocked Decky/GitHub: opening and typing 0 search RPCs; one submit 1; Show more, details, Back and reopening remained at 1. Back restored the selected row and ten-row window. Opening details made no installer call. Native INSTALL mode 0 was requested only on Install; a simulated completion event called inventory confirmation and updated the UI. These counts do not claim manifests, public release metadata or ZIP downloads are eliminated.
+
+Validation: `python3 -m unittest discover -s tests -q` (120 tests), `pnpm test` (35 tests), `pnpm typecheck`, `pnpm lint`, `ruff check .`, `ruff format --check .`, `bash scripts/build-local.sh`, `python3 scripts/validate-package.py dist-release/Decky-Direct-Updater.zip`, `python3 scripts/check-version.py`. Physical controller navigation, SteamOS keyboard, real native confirmation/cancellation and actual installation/self-update remain hardware checks; see the testing guide. Nothing has been committed or published for this build.

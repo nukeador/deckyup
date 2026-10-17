@@ -74,3 +74,51 @@ test("manual downgrade requests Decky's DOWNGRADE prompt and never claims comple
   assert.deepEqual(result, { requested: true });
   assert.equal("installed" in result, false);
 });
+
+test("new installations reuse validated staging and request native INSTALL mode", async () => {
+  let args: unknown[] = [];
+  const result = await requestUpdate(
+    { ...update, install_type: "install" },
+    {
+      call: async (...values) => {
+        args = values;
+      },
+    },
+  );
+  assert.equal(args.at(-1), 0);
+  assert.deepEqual(result, { requested: true });
+});
+
+test("Loader completion event subscription is isolated and removable", async () => {
+  const { listenForInstallCompletion } = await import("../src/deckyInstaller");
+  let listener: ((...args: unknown[]) => void) | undefined;
+  let completions = 0;
+  let removed = false;
+  const stop = listenForInstallCompletion(
+    () => {
+      completions++;
+    },
+    {
+      call: async () => {},
+      addEventListener(event, fn) {
+        assert.equal(event, "loader/plugin_download_finish");
+        listener = fn;
+      },
+      removeEventListener(event, fn) {
+        assert.equal(event, "loader/plugin_download_finish");
+        assert.equal(listener, fn);
+        removed = true;
+      },
+    },
+  );
+  listener!("plugin");
+  assert.equal(completions, 1);
+  stop();
+  assert.equal(removed, true);
+  listenForInstallCompletion(
+    () => {
+      throw Error("unavailable");
+    },
+    { call: async () => {} },
+  )();
+});

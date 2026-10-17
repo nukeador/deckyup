@@ -1,6 +1,7 @@
 """Read public GitHub release pages without spending REST core API quota."""
 
 import json
+import logging
 import math
 import re
 import time
@@ -190,8 +191,10 @@ class PublicGitHub:
     def text(self, url, refresh=False):
         _trusted(url)
         cached = self.state.get("cache", url)
+        category = "release metadata" if "/releases" in url else "manifest metadata"
         now = time.time()
         if cached and now - cached["time"] < (60 if refresh else TTL):
+            logging.getLogger(__name__).debug("GitHub cache hit: %s", category)
             if cached.get("not_found"):
                 raise _error("GitHub repository or manifest not found")
             return cached["data"]
@@ -204,6 +207,7 @@ class PublicGitHub:
         headers = {"User-Agent": "Decky-Direct-Updater/0.1", "Accept-Language": "en-US"}
         if cached and cached.get("etag"):
             headers["If-None-Match"] = cached["etag"]
+        logging.getLogger(__name__).debug("GitHub %s request", category)
         try:
             with self.opener.open(
                 urllib.request.Request(url, headers=headers), timeout=10

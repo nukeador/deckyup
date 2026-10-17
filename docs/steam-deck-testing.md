@@ -142,3 +142,20 @@ Physical checks for this feature remain pending:
 A read-only SSH smoke test with isolated temporary settings exercised actual installed metadata and upstream discovery. It does not verify Steam's directional focus, virtual keyboard or live installer behavior. Do not delete real settings or replace installed plugin directories to run development diagnostics.
 
 README screenshots were captured from the running Direct Updater panel on a Steam Deck through its local CEF debugger, cropped to the plugin panel and visually checked to exclude account names, avatars, notifications and other desktop content. They show pending updates and plugin details; no installation was started to obtain them.
+
+## Find Plugins — local 0.1.3 acceptance pass (pending hardware)
+
+Install the local ZIP from Downloads yourself, through Decky's Developer settings. This build has not been published to GitHub.
+
+1. Open Direct Updater. Use Right/Left/Up/Down to reach the Search icon immediately before Refresh; confirm that Updates, All and Refresh still work.
+2. Open Search with A. Type `MAKO` using the SteamOS keyboard; dismissing the keyboard must keep the view open. No search starts until Search/Enter is submitted. Confirm five two-line rows, stars aligned right and Fork labels where returned.
+3. Choose Show more. Confirm five extra rows appear without a new search while cached results remain. Test a long repository name and scrolling near the bottom.
+4. Open one result with A; verify compact details, compatible stable release, GitHub link and appropriate Install/Update/Up to date state. Opening it must not request installation. Press B: query, results, visible count, scroll and focused result must be preserved. B again returns to the previous main tab; reopening Search retains the search.
+5. Try `silverfoxy/decktation` and `https://github.com/silverfoxy/decktation`. Both should open the intended repository directly, using at most one uncached repository lookup rather than broad search. Repeat a name search to exercise the cache.
+6. For a plugin you want to install, select Install. Read Decky's native prompt and cancel first. Return to search: it must not claim success or save a confirmed association. If needed choose I cancelled in Decky to clear the pending request.
+7. Repeat and accept. After Decky completes, verify the success status and that All contains one plugin with the actual installed version and confirmed selected source. If the Loader event is unavailable, use Check installation. It must stay unconfirmed until the actual files/version are present.
+8. Search for an installed plugin: same source/newer stable should offer Update; current or newer installed version should show Up to date; unknown versions or a different source must not overwrite it. Test native update cancellation too.
+9. Verify an unsupported repository, a fork, archived/disabled projects, network-offline details and a search rate limit. Existing Updates/All must remain usable; short errors should replace raw exceptions. Cached results should remain available where present.
+10. Check the generic self-update flow with a later compatible test release when available. Reloading Direct Updater during installation drops its runtime pending ticket; check actual version in All afterward. No success must be inferred from merely opening/accepting the prompt.
+
+Pending physical checks: directional focus including keyboard dismissal, touch, scroll/focus retention in QAM, native INSTALL/UPDATE prompts and cancellation, successful new plugin installation/source tracking, and self-update reload. Browser mocks do not certify these. Technical logs use existing debug logging categories (search/repository/release metadata, cache hits and rate limits), with no secrets or telemetry.

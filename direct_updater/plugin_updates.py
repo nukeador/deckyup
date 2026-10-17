@@ -12,6 +12,7 @@ from .state import State
 from .versions import Version
 from .release_selection import identity, release_option
 from .source_discovery import SourceDiscovery
+from .find_plugins import Finder
 
 
 class Updater:
@@ -23,6 +24,7 @@ class Updater:
         self.operation = threading.RLock()
         self.discovery = SourceDiscovery(self.state, self.github)
         self.catalogues = {}
+        self.finder = Finder(self)
 
     def list_plugins(self):
         result = installed_plugins(self.plugins)

@@ -1,6 +1,6 @@
 # Decky Direct Updater
 
-Update your installed Decky plugins directly from their developers on GitHub.
+Find and install Decky plugins from GitHub, and keep your installed plugins up to date.
 
 ## Install
 
@@ -18,6 +18,7 @@ https://github.com/nukeador/decky-direct-updater/releases/latest/download/Decky-
 
 ## Use it
 
+- **Search icon (beside Refresh):** find a plugin by name, `owner/repo` or GitHub URL. Choose a result, check its release and select **Install**. Decky asks you to confirm.
 - **Update available:** open the plugin and choose **Update**. Decky asks you to confirm the installation.
 - **Question mark:** the source needs your attention. Open it and choose **Use this source** for a suggested repository, or **Find source**. These plugins appear on the main screen, so you do not need to look in **All**.
 - **Green dot on the Direct Updater icon:** a stable update is available. Checks run when the plugin loads and every four hours; you can also refresh manually.

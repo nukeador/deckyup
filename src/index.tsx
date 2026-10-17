@@ -13,14 +13,26 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { FaDownload, FaSyncAlt } from "react-icons/fa";
-import { requestUpdate, type StagedUpdate } from "./deckyInstaller";
+import { FaDownload, FaSyncAlt, FaSearch } from "react-icons/fa";
+import {
+  requestUpdate,
+  listenForInstallCompletion,
+  type StagedUpdate,
+} from "./deckyInstaller";
 import { NavigationGroup } from "./NavigationGroup";
 import type { ReleasePage } from "./ReleaseSelector";
 import { PluginDetails } from "./PluginDetails";
 import { PluginRow } from "./PluginRow";
 import { usePanelHeight } from "./usePanelHeight";
 import { createUpdateStore, type UpdateStore } from "./updateStore";
+import { createFindInstaller } from "./findInstaller";
+import { FindPlugins } from "./FindPlugins";
+import {
+  createFindStore,
+  type FindStore,
+  type SearchPage,
+  type RepositoryDetails,
+} from "./findStore";
 import { styles } from "./styles";
 import {
   emptyMessage,
@@ -60,11 +72,40 @@ const stageRelease = callable<
 >("stage_release");
 const errorText = (error: unknown) => String(error).replace(/^Error:\s*/, "");
 
-function Content({ store }: { store: UpdateStore }) {
+const findRepositories = callable<[string, number], SearchPage>(
+  "find_repositories",
+);
+const repositoryDetails = callable<[string], RepositoryDetails>(
+  "repository_details",
+);
+const stageRepository = callable<
+  [string, string | number, string | number],
+  StagedUpdate & { ticket?: string; error?: string }
+>("stage_repository");
+const finishRepository = callable<
+  [string, boolean],
+  { installed: boolean; error?: string }
+>("finish_repository");
+interface FinderActions {
+  install: (selection: RepositoryDetails) => Promise<string>;
+  check: () => Promise<boolean>;
+  cancel: () => Promise<void>;
+}
+function Content({
+  store,
+  finder,
+  finderActions,
+}: {
+  store: UpdateStore;
+  finder: FindStore;
+  finderActions: FinderActions;
+}) {
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const { plugins, checking: refreshing, error: checkError } = snapshot;
   const loadFailed = Boolean(checkError);
   const [navigation, dispatch] = useReducer(navigate, initialNavigation);
+  const [finding, setFinding] = useState(false);
+  const searchButton = useRef<HTMLDivElement>(null);
   const [working, setWorking] = useState<string | null>(null);
   const [messages, setMessages] = useState<Record<string, string>>({});
   const [candidates, setCandidates] = useState<Record<string, Candidate[]>>({});
@@ -103,6 +144,7 @@ function Content({ store }: { store: UpdateStore }) {
   );
 
   useLayoutEffect(() => {
+    if (finding) return;
     if (selected) {
       backRef.current?.focus({ preventScroll: true });
       return;
@@ -124,6 +166,7 @@ function Content({ store }: { store: UpdateStore }) {
 
   useLayoutEffect(() => {
     const pending = pendingList.current;
+    if (finding) return;
     if (selected) {
       if (
         backRef.current &&
@@ -184,7 +227,7 @@ function Content({ store }: { store: UpdateStore }) {
       <style>{styles}</style>
       <NavigationGroup
         className="ddu-main"
-        hidden={Boolean(selected)}
+        hidden={Boolean(selected) || finding}
         flow-children="column"
       >
         <NavigationGroup className="ddu-toolbar" flow-children="row">
@@ -212,6 +255,19 @@ function Content({ store }: { store: UpdateStore }) {
               </Focusable>
             ))}
           </NavigationGroup>
+          <Focusable
+            ref={searchButton}
+            role="button"
+            tabIndex={0}
+            className="ddu-icon-button"
+            focusClassName="ddu-focused"
+            aria-label="Find Plugins"
+            onActivate={() => setFinding(true)}
+            onClick={() => setFinding(true)}
+            onOKActionDescription="Find Plugins"
+          >
+            <FaSearch aria-hidden="true" />
+          </Focusable>
           <Focusable
             role="button"
             tabIndex={0}
@@ -277,7 +333,21 @@ function Content({ store }: { store: UpdateStore }) {
           )}
         </NavigationGroup>
       </NavigationGroup>
-      {selected && (
+      <FindPlugins
+        open={finding}
+        store={finder}
+        onBack={() => {
+          setFinding(false);
+          requestAnimationFrame(() =>
+            searchButton.current?.focus({ preventScroll: true }),
+          );
+        }}
+        details={repositoryDetails}
+        install={finderActions.install}
+        checkInstallation={finderActions.check}
+        cancelInstallation={finderActions.cancel}
+      />
+      {selected && !finding && (
         <PluginDetails
           plugin={selected}
           loadReleases={releases}
@@ -438,13 +508,29 @@ export default definePlugin(() => {
       return () => clearInterval(timer);
     },
   });
+  const finder = createFindStore(findRepositories);
+  const finderActions = createFindInstaller({
+    stage: stageRepository,
+    finish: finishRepository,
+    request: requestUpdate,
+    refresh: () => store.refresh(false),
+    installed: (repository) => finder.installed(repository),
+  });
+  const stopInstallListener = listenForInstallCompletion((name) => {
+    void finderActions.check(name).catch(() => {});
+  });
   store.start();
   return {
     name: "Decky Direct Updater",
     titleView: <div>Direct Updater</div>,
-    content: <Content store={store} />,
+    content: (
+      <Content store={store} finder={finder} finderActions={finderActions} />
+    ),
     icon: <UpdateIcon store={store} />,
     onDismount() {
+      finderActions.dispose();
+      stopInstallListener();
+      finder.dispose();
       store.dispose();
     },
   };

@@ -31,9 +31,20 @@ class State:
         with self.lock:
             return self.data[section].get(key)
 
-    def put(self, section, key, value):
+    def put(self, section, key, value, max_find_entries=None):
         with self.lock:
             self.data[section][key] = value
+            if max_find_entries:
+                entries = sorted(
+                    (
+                        k
+                        for k, v in self.data[section].items()
+                        if isinstance(v, dict) and v.get("find_cache")
+                    ),
+                    key=lambda k: self.data[section][k].get("time", 0),
+                )
+                for old in entries[:-max_find_entries]:
+                    del self.data[section][old]
             descriptor, temporary = tempfile.mkstemp(dir=self.path.parent, prefix=".state-")
             try:
                 with os.fdopen(descriptor, "w") as stream:
