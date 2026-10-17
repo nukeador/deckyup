@@ -4,7 +4,7 @@ import {
   callable,
   definePlugin,
 } from "@decky/api";
-import { Focusable, Spinner } from "@decky/ui";
+import { Focusable, Navigation, Spinner } from "@decky/ui";
 import {
   useEffect,
   useLayoutEffect,
@@ -16,6 +16,8 @@ import {
 import { FaDownload, FaSyncAlt, FaSearch } from "react-icons/fa";
 import {
   requestUpdate,
+  requestSelfUpdate,
+  reopenAfterSelfUpdate,
   listenForInstallCompletion,
   type StagedUpdate,
 } from "./deckyInstaller";
@@ -232,7 +234,7 @@ function Content({
       );
       if (response.error || !response.update)
         throw new Error(response.error || "Update preparation failed");
-      const result = await requestUpdate(response.update);
+      const result = await requestSelfUpdate(response.update);
       if (!result.requested) throw new Error(result.error);
       if (mounted.current)
         setMessages((previous) => ({
@@ -411,7 +413,7 @@ function Content({
               );
               if (response.error || !response.update)
                 throw new Error(response.error || "Version preparation failed");
-              const result = await requestUpdate(response.update);
+              const result = await requestSelfUpdate(response.update);
               if (!result.requested) throw new Error(result.error);
               if (mounted.current)
                 setMessages((previous) => ({
@@ -552,6 +554,7 @@ export default definePlugin(() => {
     void finderActions.check(name).catch(() => {});
   });
   store.start();
+  void reopenAfterSelfUpdate(list, Navigation);
   return {
     name: "Decky Direct Updater",
     titleView: <div>Direct Updater</div>,

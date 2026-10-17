@@ -10,6 +10,11 @@ https://github.com/nukeador/deckyup/releases/latest/download/Decky-Direct-Update
 
 Or download **Decky-Direct-Updater.zip** below and use **Install Plugin from ZIP**.
 
+### v0.1.7
+
+- **Self-update panel refresh:** after Decky confirms the new installed version, close the old quick-access panel and reopen the Decky tab so the updated interface is shown.
+- Cancelled or failed self-updates do not trigger a panel reopen.
+
 ### v0.1.6
 
 - **Safer updates:** reject update archives whose internal package identity differs from the installed plugin.

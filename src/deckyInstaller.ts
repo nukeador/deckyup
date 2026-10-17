@@ -18,6 +18,81 @@ export interface Router {
   call(route: string, ...args: unknown[]): Promise<unknown>;
 }
 export type InstallResult = { requested: boolean; error?: string };
+const SELF_NAME = "Decky Direct Updater";
+const SELF_REOPEN_KEY = "decky-direct-updater:self-reopen";
+const REOPEN_EXPIRY = 30 * 60 * 1000;
+
+function session(): Storage | undefined {
+  try {
+    return typeof window === "undefined" ? undefined : window.sessionStorage;
+  } catch {
+    return undefined;
+  }
+}
+
+/** A later frontend mount can reopen Decky only after inventory proves installation. */
+export async function requestSelfUpdate(
+  update: StagedUpdate,
+  request: (update: StagedUpdate) => Promise<InstallResult> = requestUpdate,
+): Promise<InstallResult> {
+  const storage = session();
+  if (update.name !== SELF_NAME || !storage) return request(update);
+  storage.setItem(
+    SELF_REOPEN_KEY,
+    JSON.stringify({ version: update.version, created: Date.now() }),
+  );
+  try {
+    const result = await request(update);
+    if (!result.requested) storage.removeItem(SELF_REOPEN_KEY);
+    return result;
+  } catch (error) {
+    storage.removeItem(SELF_REOPEN_KEY);
+    throw error;
+  }
+}
+
+export async function reopenAfterSelfUpdate(
+  installed: () => Promise<{ name: string; version?: string }[]>,
+  navigation: {
+    CloseSideMenus(): void;
+    OpenQuickAccessMenu(tab: number): void;
+  },
+): Promise<void> {
+  const storage = session();
+  const raw = storage?.getItem(SELF_REOPEN_KEY);
+  if (!raw || !storage) return;
+  let pending: { version: string; created: number };
+  try {
+    pending = JSON.parse(raw);
+  } catch {
+    storage.removeItem(SELF_REOPEN_KEY);
+    return;
+  }
+  if (
+    typeof pending.version !== "string" ||
+    typeof pending.created !== "number" ||
+    Date.now() - pending.created > REOPEN_EXPIRY ||
+    Date.now() < pending.created
+  ) {
+    storage.removeItem(SELF_REOPEN_KEY);
+    return;
+  }
+  try {
+    const plugins = await installed();
+    if (
+      !plugins.some(
+        (plugin) =>
+          plugin.name === SELF_NAME && plugin.version === pending.version,
+      )
+    )
+      return;
+    storage.removeItem(SELF_REOPEN_KEY);
+    navigation.CloseSideMenus();
+    setTimeout(() => navigation.OpenQuickAccessMenu(999), 100);
+  } catch {
+    // Preserve the marker for a later mount if inventory is temporarily unavailable.
+  }
+}
 
 function loaderRouter(): Router | undefined {
   return typeof window === "undefined"

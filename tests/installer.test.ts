@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { requestUpdate, type Router } from "../src/deckyInstaller";
+import {
+  requestUpdate,
+  requestSelfUpdate,
+  reopenAfterSelfUpdate,
+  type Router,
+} from "../src/deckyInstaller";
 
 const update = {
   artifact:
@@ -121,4 +126,63 @@ test("Loader completion event subscription is isolated and removable", async () 
     },
     { call: async () => {} },
   )();
+});
+
+test("self-update reopens Decky only when installed version matches", async () => {
+  const values = new Map<string, string>();
+  const previous = globalThis.window;
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: {
+      sessionStorage: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          values.set(key, value);
+        },
+        removeItem: (key: string) => {
+          values.delete(key);
+        },
+      },
+    },
+  });
+  try {
+    const self = { ...update, name: "Decky Direct Updater" };
+    let closed = 0;
+    const navigation = {
+      CloseSideMenus: () => {
+        closed++;
+      },
+      OpenQuickAccessMenu: (_tab: number) => {},
+    };
+    await requestSelfUpdate(self, async () => ({ requested: true }));
+    await reopenAfterSelfUpdate(
+      async () => [{ name: self.name, version: "old" }],
+      navigation,
+    );
+    assert.equal(closed, 0);
+    await reopenAfterSelfUpdate(
+      async () => [{ name: self.name, version: self.version }],
+      navigation,
+    );
+    assert.equal(closed, 1);
+    await reopenAfterSelfUpdate(
+      async () => [{ name: self.name, version: self.version }],
+      navigation,
+    );
+    assert.equal(closed, 1);
+    await requestSelfUpdate(self, async () => ({ requested: false }));
+    await reopenAfterSelfUpdate(
+      async () => [{ name: self.name, version: self.version }],
+      navigation,
+    );
+    assert.equal(closed, 1);
+  } finally {
+    if (previous === undefined)
+      delete (globalThis as { window?: Window }).window;
+    else
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previous,
+      });
+  }
 });
