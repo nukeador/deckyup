@@ -107,6 +107,8 @@ function Content({
   const [finding, setFinding] = useState(false);
   const searchButton = useRef<HTMLDivElement>(null);
   const [working, setWorking] = useState<string | null>(null);
+  const [rowActionId, setRowActionId] = useState<string | null>(null);
+  const focusedRow = useRef<string | null>(null);
   const [messages, setMessages] = useState<Record<string, string>>({});
   const [candidates, setCandidates] = useState<Record<string, Candidate[]>>({});
   const rootRef = useRef<HTMLDivElement>(null);
@@ -180,7 +182,7 @@ function Content({
     if (!pending || !listRef.current) return;
     const bookmark = navigation.bookmarks[navigation.view];
     const target = pending.focused
-      ? rows.current.get(bookmark.selectedId || "") ||
+      ? rows.current.get(focusedRow.current || bookmark.selectedId || "") ||
         rows.current.get(visible[0]?.id)
       : undefined;
     restoreBookmark(listRef.current, target, {
@@ -219,6 +221,26 @@ function Content({
       workingRef.current = false;
       if (mounted.current) setWorking(null);
     }
+  }
+
+  function update(plugin: InstalledPlugin) {
+    return action(plugin, async () => {
+      const response = await stage(
+        plugin.id,
+        plugin.release_id!,
+        plugin.asset_id!,
+      );
+      if (response.error || !response.update)
+        throw new Error(response.error || "Update preparation failed");
+      const result = await requestUpdate(response.update);
+      if (!result.requested) throw new Error(result.error);
+      if (mounted.current)
+        setMessages((previous) => ({
+          ...previous,
+          [plugin.id]:
+            "Confirmation requested. Accept or cancel in Decky, then refresh to read the installed version.",
+        }));
+    });
   }
 
   const updates = plugins.filter((plugin) => plugin.status === "update").length;
@@ -296,6 +318,14 @@ function Content({
             {checkError || "Some checks failed. Open a plugin to retry."}
           </div>
         )}
+        {rowActionId && (working === rowActionId || messages[rowActionId]) && (
+          <div className="ddu-notice" role="status">
+            {plugins.find((plugin) => plugin.id === rowActionId)?.name}:{" "}
+            {working === rowActionId
+              ? "Preparing update…"
+              : messages[rowActionId]}
+          </div>
+        )}
         <NavigationGroup
           flow-children="column"
           id="ddu-plugin-list"
@@ -312,11 +342,29 @@ function Content({
             <PluginRow
               key={plugin.id}
               plugin={plugin}
+              busy={working !== null}
+              updating={working === plugin.id}
+              onUpdate={() => {
+                if (workingRef.current) return;
+                setRowActionId(plugin.id);
+                void update(plugin);
+              }}
+              registerUpdate={(element) => {
+                if (element) rows.current.set(plugin.id + ":update", element);
+                else rows.current.delete(plugin.id + ":update");
+              }}
+              onUpdateFocus={() => {
+                focusedRow.current = plugin.id + ":update";
+                dispatch({ type: "focus", id: plugin.id });
+              }}
               register={(element) => {
                 if (element) rows.current.set(plugin.id, element);
                 else rows.current.delete(plugin.id);
               }}
-              onFocus={() => dispatch({ type: "focus", id: plugin.id })}
+              onFocus={() => {
+                focusedRow.current = plugin.id;
+                dispatch({ type: "focus", id: plugin.id });
+              }}
               onOpen={() =>
                 dispatch({
                   type: "open",
@@ -429,23 +477,7 @@ function Content({
             });
           }}
           onUpdate={() => {
-            void action(selected, async () => {
-              const response = await stage(
-                selected.id,
-                selected.release_id!,
-                selected.asset_id!,
-              );
-              if (response.error || !response.update)
-                throw new Error(response.error || "Update preparation failed");
-              const result = await requestUpdate(response.update);
-              if (!result.requested) throw new Error(result.error);
-              if (mounted.current)
-                setMessages((previous) => ({
-                  ...previous,
-                  [selected.id]:
-                    "Confirmation requested. Accept or cancel in Decky, then refresh to read the installed version.",
-                }));
-            });
+            void update(selected);
           }}
         />
       )}

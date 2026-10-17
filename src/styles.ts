@@ -13,6 +13,11 @@ export const styles = `
 .ddu-tab[aria-selected="true"] { background: var(--gpBackground-LightMedium, #3d4450); color: var(--gpSystemLightestGrey, #fff); }
 .ddu-list { overflow-y: auto; flex: 1; min-height: 0; padding: 2px 8px; overscroll-behavior: contain; }
 .ddu-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 56px; padding: 8px; border-radius: 2px; cursor: pointer; }
+.ddu-plugin-row { display: flex; align-items: stretch; min-width: 0; }
+.ddu-plugin-details { flex: 1; min-width: 0; width: auto; }
+.ddu-quick-update { flex: 0 0 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 2px; }
+.ddu-quick-update[aria-disabled="true"] { opacity: .6; }
+.ddu-quick-update:focus-visible { outline: 2px solid #fff; outline-offset: -2px; background: var(--gpBackground-LightMedium, #3d4450); }
 .ddu-row-text { flex: 1; min-width: 0; }
 .ddu-name, .ddu-subtitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.25rem; }
 .ddu-name { font-weight: 500; }

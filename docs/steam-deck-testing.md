@@ -159,3 +159,7 @@ Install the local ZIP from Downloads yourself, through Decky's Developer setting
 10. Check the generic self-update flow with a later compatible test release when available. Reloading Direct Updater during installation drops its runtime pending ticket; check actual version in All afterward. No success must be inferred from merely opening/accepting the prompt.
 
 Pending physical checks: directional focus including keyboard dismissal, touch, scroll/focus retention in QAM, native INSTALL/UPDATE prompts and cancellation, successful new plugin installation/source tracking, and self-update reload. Browser mocks do not certify these. Technical logs use existing debug logging categories (search/repository/release metadata, cache hits and rate limits), with no secrets or telemetry.
+
+## Quick update actions — local 0.1.5
+
+In both Updates and All, activate the plugin name to open details, or move Right to its download icon and press A to prepare the update directly. The icon shows a spinner while preparing; repeated presses must not prepare another ZIP. Decky still asks for confirmation. Cancel must not report success or clear the update indicator. Check touch targets, Left/Right focus, long names, scroll retention and errors from the list. Non-update status icons remain part of the Details action. These physical checks remain pending.
