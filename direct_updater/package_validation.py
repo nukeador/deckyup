@@ -22,7 +22,7 @@ MAX_FILES = 30000
 MAX_MANIFEST = 1024 * 1024
 
 
-def validate_package(path, name, version, expected_root=None):
+def validate_package(path, name, version, expected_root=None, expected_package_name=None):
     try:
         with zipfile.ZipFile(path) as archive:
             entries = archive.infolist()
@@ -99,6 +99,11 @@ def validate_package(path, name, version, expected_root=None):
                 raise ValueError("Invalid manifest objects")
             if manifest.get("name") != name:
                 raise ValueError("ZIP plugin name does not match the installed plugin")
+            if (
+                expected_package_name is not None
+                and package.get("name", "") != expected_package_name
+            ):
+                raise ValueError("ZIP package identity does not match the installed plugin")
             if Version(package.get("version", "")) != Version(version):
                 raise ValueError("ZIP version does not match the selected release")
             if manifest.get("version") and Version(manifest["version"]) != Version(version):
@@ -124,10 +129,10 @@ def validate_package(path, name, version, expected_root=None):
         raise ValueError("Invalid Decky ZIP archive") from error
 
 
-def repack_for_installed_folder(path, name, version, folder):
+def repack_for_installed_folder(path, name, version, folder, expected_package_name=None):
     if not folder or folder in (".", "..") or any(c in folder for c in ("/", "\\", "\0")):
         raise ValueError("Invalid installed plugin folder")
-    info = validate_package(path, name, version)
+    info = validate_package(path, name, version, expected_package_name=expected_package_name)
     if info["root"] == folder:
         return
     descriptor, replacement = tempfile.mkstemp(
@@ -148,7 +153,7 @@ def repack_for_installed_folder(path, name, version, folder):
                     shutil.copyfileobj(stream, destination, 1024 * 1024)
         if Path(replacement).stat().st_size > MAX_DOWNLOAD:
             raise ValueError("Repacked update exceeds download size limit")
-        validate_package(replacement, name, version, folder)
+        validate_package(replacement, name, version, folder, expected_package_name)
         os.replace(replacement, path)
     finally:
         Path(replacement).unlink(missing_ok=True)
@@ -164,7 +169,9 @@ def cleanup_staged(directory):
             path.unlink(missing_ok=True)
 
 
-def stage_download(asset, repo, name, version, directory, expected_root=None):
+def stage_download(
+    asset, repo, name, version, directory, expected_root=None, expected_package_name=None
+):
     url = asset.get("browser_download_url", "")
     parsed = urllib.parse.urlsplit(url)
     if (
@@ -220,9 +227,11 @@ def stage_download(asset, repo, name, version, directory, expected_root=None):
         if authoritative:
             if authoritative != "sha256:" + checksum:
                 raise ValueError("GitHub asset checksum mismatch")
-        validate_package(temporary, name, version)
+        validate_package(temporary, name, version, expected_package_name=expected_package_name)
         if expected_root:
-            repack_for_installed_folder(temporary, name, version, expected_root)
+            repack_for_installed_folder(
+                temporary, name, version, expected_root, expected_package_name
+            )
             digest = hashlib.sha256()
             with open(temporary, "rb") as staged:
                 for chunk in iter(lambda: staged.read(1024 * 1024), b""):

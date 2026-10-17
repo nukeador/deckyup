@@ -179,6 +179,7 @@ class Updater:
                 option["version"],
                 self.staging,
                 plugin["id"],
+                expected_package_name=plugin["package_name"],
             )
             staged["install_type"] = "downgrade" if option["downgrade"] else "update"
             return staged
@@ -208,4 +209,5 @@ class Updater:
                 selected["latest"],
                 self.staging,
                 plugin["id"],
+                expected_package_name=plugin["package_name"],
             )

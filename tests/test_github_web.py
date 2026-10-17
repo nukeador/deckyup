@@ -80,6 +80,33 @@ class Web(unittest.TestCase):
         self.assertEqual(releases[0]["tag_name"], "nightly")
         self.assertEqual(compatible_releases({"name": "Plugin"}, releases), ([], False))
 
+    def test_ambiguous_asset_does_not_stop_release_search(self):
+        plugin = {"name": "Plugin Updater", "package_name": "plugin-updater"}
+        html = page(("v2.0.0", "v1.2.3"))
+        ambiguous = (
+            assets("v2.0.0")
+            .replace("Plugin.zip", "Plugin-Updater.zip")
+            .replace(
+                "</ul>",
+                '<li><a href="/owner/plugin/releases/download/v2.0.0/Plugin-Updater-v2.0.0.zip">Plugin-Updater-v2.0.0.zip</a></li></ul>',
+            )
+        )
+
+        def read(url, refresh=False):
+            if "expanded_assets/v2.0.0" in url:
+                return ambiguous
+            if "expanded_assets/v1.2.3" in url:
+                return assets("v1.2.3").replace("Plugin.zip", "Plugin-Updater.zip")
+            return html
+
+        with patch.object(self.client, "text", side_effect=read) as request:
+            result = self.client.releases(REPO, plugins=[plugin])
+        self.assertEqual(compatible_releases(plugin, result), ([], True))
+        self.assertEqual(len(result), 2)
+        self.assertTrue(
+            any("expanded_assets/v1.2.3" in call.args[0] for call in request.call_args_list)
+        )
+
     def test_assets_are_bound_to_repo_tag_and_digest(self):
         parser = AssetPage(REPO, "v1.2.3")
         parser.feed(assets())

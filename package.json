@@ -1,6 +1,6 @@
 {
   "name": "decky-direct-updater",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Keep your Decky plugins up to date directly from their developers.",
   "type": "module",
   "repository": {

@@ -10,6 +10,11 @@ https://github.com/nukeador/deckyup/releases/latest/download/Decky-Direct-Update
 
 Or download **Decky-Direct-Updater.zip** below and use **Install Plugin from ZIP**.
 
+### v0.1.6
+
+- **Safer updates:** reject update archives whose internal package identity differs from the installed plugin.
+- **More reliable GitHub release discovery:** inspect subsequent stable releases when a newer release has ambiguous assets, while continuing to reject unsafe automatic selections.
+
 ### v0.1.5
 
 - **Update directly from the list:** select the download icon beside a plugin in Updates or All to prepare its update and open Decky's native confirmation. The name still opens details.

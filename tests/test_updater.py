@@ -242,6 +242,9 @@ class Releases(Workspace):
         ) as stage:
             self.app.stage("updater", 10, 20)
             self.assertEqual(stage.call_args.args[1:4], (REPO, NAME, "0.1.1"))
+            self.assertEqual(
+                stage.call_args.kwargs["expected_package_name"], "decky-direct-updater"
+            )
             with self.assertRaises(ValueError):
                 self.app.stage("updater", 10, 999)
             with self.assertRaises(ValueError):
@@ -318,6 +321,51 @@ class Packages(Workspace):
 
     def test_valid(self):
         self.assertEqual(self.validate(archive_bytes())["root"], "plugin")
+
+    def test_update_zip_must_keep_installed_package_identity(self):
+        asset = release()["assets"][0]
+        for package_name, accepted in (
+            ("other-plugin", False),
+            ("decky-direct-updater", True),
+        ):
+            data = archive_bytes(
+                extra={
+                    "plugin/package.json": json.dumps({"name": package_name, "version": "0.1.1"})
+                }
+            )
+            asset["size"] = len(data)
+            response = Mock()
+            response.headers = {"Content-Length": str(len(data))}
+            response.geturl.return_value = asset["browser_download_url"]
+            response.read.side_effect = [data, b""]
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            opener = Mock()
+            opener.open.return_value = response
+            with patch("urllib.request.build_opener", return_value=opener):
+                if accepted:
+                    staged = stage_download(
+                        asset,
+                        REPO,
+                        NAME,
+                        "0.1.1",
+                        self.root / "staged",
+                        "updater",
+                        expected_package_name="decky-direct-updater",
+                    )
+                    self.assertTrue(Path(staged["artifact"][7:]).exists())
+                else:
+                    with self.assertRaisesRegex(ValueError, "package identity"):
+                        stage_download(
+                            asset,
+                            REPO,
+                            NAME,
+                            "0.1.1",
+                            self.root / "staged",
+                            "updater",
+                            expected_package_name="decky-direct-updater",
+                        )
+                    self.assertEqual(list((self.root / "staged").glob("*.zip")), [])
 
     def test_invalid_identity_version_missing_corrupt_and_paths(self):
         cases = [

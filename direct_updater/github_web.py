@@ -297,7 +297,7 @@ class PublicGitHub:
                     "repository": repo,
                 }
             )
-            if plugins and all(any(compatible_releases(plugin, result)) for plugin in plugins):
+            if plugins and all(compatible_releases(plugin, result)[0] for plugin in plugins):
                 break
         self.state.put("cache", cache_key, {"time": time.time(), "data": result})
         return result

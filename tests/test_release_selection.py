@@ -57,6 +57,7 @@ class ManualSelection(Workspace):
         self.assertEqual(staged["install_type"], "downgrade")
         self.assertEqual(stage.call_args.args[2:4], (NAME, "0.9.0"))
         self.assertEqual(stage.call_args.args[-1], "updater")
+        self.assertEqual(stage.call_args.kwargs["expected_package_name"], "decky-direct-updater")
         self.assertTrue(self.app.github.release_page.call_args.kwargs["refresh"])
 
     @patch("direct_updater.plugin_updates.stage_download", return_value={})
@@ -122,7 +123,17 @@ class ManualSelection(Workspace):
         self.app.list_releases("updater")
         for data, message in (
             (archive_bytes(name="Other", version="2.0.0-rc.1"), "name does not match"),
-            (archive_bytes(version="2.0.0"), "version does not match"),
+            (
+                archive_bytes(
+                    version="2.0.0",
+                    extra={
+                        "plugin/package.json": json.dumps(
+                            {"name": "decky-direct-updater", "version": "2.0.0"}
+                        )
+                    },
+                ),
+                "version does not match",
+            ),
         ):
             response = Mock()
             response.headers = {"Content-Length": str(len(data))}
@@ -202,7 +213,14 @@ class GenericSelfSelection(Workspace):
         import zipfile
         from pathlib import Path
 
-        data = archive_bytes(version="2.0.0-rc.1")
+        data = archive_bytes(
+            version="2.0.0-rc.1",
+            extra={
+                "plugin/package.json": json.dumps(
+                    {"name": "decky-direct-updater", "version": "2.0.0-rc.1"}
+                )
+            },
+        )
         self.new["assets"][0]["size"] = len(data)
         self.new["assets"][0]["digest"] = "sha256:" + hashlib.sha256(data).hexdigest()
         self.app.list_releases("updater")
