@@ -168,9 +168,7 @@ class Pages(unittest.TestCase):
     def test_site_html_structure_custom_domain_and_accessibility(self):
         pages.build(self.output, self.fetch)
         doc = Document((self.output / "index.html").read_text())
-        self.assertEqual(
-            doc.install_url, "https://deckyup.nukeador.com/install.zip"
-        )
+        self.assertEqual(doc.install_url, "https://deckyup.nukeador.com/install.zip")
         downloads = [link for link in doc.links if link == "./install.zip"]
         self.assertEqual(len(downloads), 2)
         self.assertEqual(sum("data-copy" in button for button in doc.buttons), 2)
@@ -223,9 +221,7 @@ class Pages(unittest.TestCase):
             self.assertIn('src="../images/find-plugins.png"', markup)
             self.assertIn('href="../' + code + '/"', markup)
             document = Document(markup)
-            self.assertEqual(
-                document.install_url, "https://deckyup.nukeador.com/install.zip"
-            )
+            self.assertEqual(document.install_url, "https://deckyup.nukeador.com/install.zip")
             for link in document.links:
                 if link.startswith("#"):
                     self.assertIn(link[1:], document.ids)
