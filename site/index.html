@@ -36,6 +36,24 @@
     />
     <meta name="twitter:image:alt" content="{{title}}" />
     <meta name="theme-color" content="#14171b" />
+    <!-- Matomo -->
+    <script>
+      var _paq = (window._paq = window._paq || []);
+      _paq.push(["trackPageView"]);
+      _paq.push(["enableLinkTracking"]);
+      (function () {
+        var u = "//stats.nukeador.com/";
+        _paq.push(["setTrackerUrl", u + "matomo.php"]);
+        _paq.push(["setSiteId", "31"]);
+        var d = document,
+          g = d.createElement("script"),
+          s = d.getElementsByTagName("script")[0];
+        g.async = true;
+        g.src = u + "matomo.js";
+        s.parentNode.insertBefore(g, s);
+      })();
+    </script>
+    <!-- End Matomo Code -->
     <link rel="stylesheet" href="{{prefix}}styles.css" />
     <script src="{{prefix}}script.js" type="module"></script>
   </head>

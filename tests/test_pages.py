@@ -69,7 +69,9 @@ class Document(HTMLParser):
                 raise AssertionError("Duplicate ID")
             self.ids.append(attrs["id"])
         if tag in {"a", "link", "script"}:
-            self.links.append(attrs.get("href", attrs.get("src")))
+            destination = attrs.get("href", attrs.get("src"))
+            if destination is not None:
+                self.links.append(destination)
         if tag == "meta":
             self.metas.append(attrs)
         if tag == "img":
@@ -271,6 +273,15 @@ class Pages(unittest.TestCase):
             self.assertIn('href="../favicon.svg"', markup)
             self.assertIn('href="../favicon-32.png"', markup)
             self.assertIn('href="../favicon.ico"', markup)
+            self.assertEqual(
+                markup.count("var _paq = (window._paq = window._paq || []);"), 1
+            )
+            self.assertIn('_paq.push(["trackPageView"]);', markup)
+            self.assertIn('_paq.push(["enableLinkTracking"]);', markup)
+            self.assertIn('var u = "//stats.nukeador.com/";', markup)
+            self.assertIn('u + "matomo.php"', markup)
+            self.assertIn('_paq.push(["setSiteId", "31"]);', markup)
+            self.assertIn('g.src = u + "matomo.js";', markup)
             self.assertIn(
                 {
                     "property": "og:image",
@@ -295,6 +306,10 @@ class Pages(unittest.TestCase):
                 elif not urlsplit(link).scheme:
                     self.assertTrue((page.parent / link).exists(), f"{code}: {link}")
             self.assertEqual(markup.count('rel="alternate"'), 11)
+        root_markup = (self.output / "index.html").read_text()
+        self.assertEqual(
+            root_markup.count("var _paq = (window._paq = window._paq || []);"), 1
+        )
         self.assertEqual(len(list(self.output.glob("**/install.zip"))), 1)
 
     def test_missing_translation_fails_instead_of_silently_showing_english(self):

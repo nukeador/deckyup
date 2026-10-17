@@ -47,7 +47,7 @@ At most two unresolved plugins are searched automatically per backend session, a
 
 Associations record directory, exact Decky display name, package identity and internal provenance. Explicit user confirmations take precedence over metadata and database hints. Automatic records are reconsidered when relevant metadata changes. Old display-name-only confirmations migrate when local project evidence agrees; otherwise they remain hints and may need one confirmation, rather than being attached to a different plugin with the same name. Settings and cache remain outside installed files and survive self-update.
 
-Confirmed associations and HTTP cache live in Decky's plugin settings directory; staged ZIPs live in its runtime directory and expire after 24 hours during later staging. No token, additional hosted catalog, analytics, or project-operated server is involved.
+Confirmed associations and HTTP cache live in Decky's plugin settings directory; staged ZIPs live in its runtime directory and expire after 24 hours during later staging. The plugin runtime makes no analytics calls and uses no token, additional hosted catalog, or project-operated server.
 
 ## Safety and limitations
 
