@@ -1,0 +1,8 @@
+packages:
+  - "."
+# Also allow the desktop runtime's newer pnpm to run the pnpm 9 project scripts.
+verifyDepsBeforeRun: false
+peerDependencyRules:
+  ignoreMissing:
+    - react
+    - react-dom

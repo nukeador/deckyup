@@ -1,0 +1,54 @@
+name: Deliberate version release
+on:
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 scripts/check-version.py "$GITHUB_REF_NAME"
+      - run: npm install --global pnpm@9.15.9
+      - run: pnpm install --frozen-lockfile
+      - run: python3 -m unittest discover -s tests -v
+      - run: pnpm test && pnpm typecheck && pnpm lint
+      - run: python3 -m pip install -r requirements-dev.txt
+      - run: python3 -m ruff check . && python3 -m ruff format --check .
+      - run: bash scripts/build-local.sh
+      - name: Name release asset and calculate checksum
+        run: |
+          cd dist-release
+          sha256sum Decky-Direct-Updater.zip > SHA256SUMS
+          cp ../docs/release-notes.md RELEASE_NOTES.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: |
+            dist-release/*.zip
+            dist-release/SHA256SUMS
+            dist-release/RELEASE_NOTES.md
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: release
+      - name: Publish tagged release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" release/*.zip release/SHA256SUMS --verify-tag --title "$GITHUB_REF_NAME" --notes-file release/RELEASE_NOTES.md

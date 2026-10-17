@@ -1,0 +1,47 @@
+{
+  "name": "decky-direct-updater",
+  "version": "0.1.1",
+  "description": "Keep your Decky plugins up to date directly from their developers.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nukeador/decky-direct-updater.git"
+  },
+  "author": "nukeador",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "rollup -c --forceExit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "lint": "prettier --check src tests/*.ts '*.json' '*.js' .github/workflows/*.yml",
+    "format": "prettier --write src tests/*.ts '*.json' '*.js' .github/workflows/*.yml",
+    "check:version": "python3 scripts/check-version.py",
+    "package": "bash scripts/build-local.sh",
+    "fixtures": "python3 scripts/build-fixtures.py"
+  },
+  "devDependencies": {
+    "@decky/rollup": "^1.0.2",
+    "@decky/ui": "^4.11.0",
+    "@types/react": "19.1.1",
+    "@types/react-dom": "19.1.1",
+    "@types/node": "^22.0.0",
+    "rollup": "^4.53.3",
+    "typescript": "^5.6.2",
+    "tsx": "^4.20.0",
+    "prettier": "^3.6.0"
+  },
+  "dependencies": {
+    "@decky/api": "^1.1.3",
+    "react-icons": "^5.3.0",
+    "tslib": "^2.7.0"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ]
+    }
+  }
+}

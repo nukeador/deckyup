@@ -1,0 +1,53 @@
+"""LOCAL HARDWARE TEST ONLY. Never included in production packages."""
+import hashlib
+import json
+import shutil
+import tempfile
+from pathlib import Path
+
+from .package_validation import validate_package
+from .plugin_updates import Updater
+
+
+class FixtureGitHub:
+    def __init__(self, normal, root, repo):
+        self.normal, self.root, self.repo = normal, root, repo
+
+    def releases(self, repo, refresh=False, plugins=None):
+        if repo == self.repo:
+            return json.loads((self.root / "release.json").read_text())
+        return self.normal.releases(repo, refresh, plugins=plugins)
+
+    def __getattr__(self, name):
+        return getattr(self.normal, name)
+
+
+class FixtureUpdater(Updater):
+    def __init__(self, plugins, settings, runtime):
+        super().__init__(plugins, settings, runtime)
+        # A fixed local fixture directory, no URL/file RPC override. Only fixture
+        # builds contain this module; production cannot enable it via settings.
+        self.fixture = Path(runtime) / "local-fixture"
+        own = Path(__file__).resolve().parents[1]
+        metadata = json.loads((own / "package.json").read_text())
+        from .installed_plugins import repository
+        self.fixture_source = repository(metadata["repository"])
+        self.github = FixtureGitHub(self.github, self.fixture, self.fixture_source)
+
+    def stage(self, identifier, release_id, asset_id):
+        plugin = self.plugin(identifier)
+        if plugin["source"] != self.fixture_source:
+            return super().stage(identifier, release_id, asset_id)
+        selected = self.resolve(plugin, self.github.releases(plugin["source"]))
+        if (selected["status"] != "update" or selected["release_id"] != release_id
+                or selected["asset_id"] != asset_id):
+            raise ValueError("Fixture selection no longer valid")
+        source = self.fixture / "Decky-Direct-Updater-v0.1.1.zip"
+        validate_package(source, plugin["name"], selected["latest"], plugin["id"])
+        self.staging.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(prefix="update-", suffix=".zip", dir=self.staging, delete=False) as target:
+            with source.open("rb") as stream:
+                shutil.copyfileobj(stream, target)
+            path = Path(target.name)
+        return {"artifact": "file://" + str(path.resolve()), "name": plugin["name"],
+                "version": selected["latest"], "hash": hashlib.sha256(path.read_bytes()).hexdigest()}

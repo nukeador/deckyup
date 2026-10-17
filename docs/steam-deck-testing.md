@@ -1,0 +1,144 @@
+# Local Steam Deck testing
+
+Hardware validation is pending. These instructions do not deploy to a Deck automatically. Use the fixture packages for the first replacement test, rather than an important installed plugin. Production packages and fixture packages have the same identity: installing either replaces the other.
+
+## Build and transfer
+
+On the development computer, from the repository:
+
+```sh
+pnpm install --frozen-lockfile
+bash scripts/build-local.sh
+pnpm fixtures
+```
+
+Transfer `dist-release/Decky-Direct-Updater.zip` and the entire `dist-release/local-fixture/` directory to the Deck's Downloads directory using a USB drive, KDE Connect, or a transfer method you already use. Do not unpack the installable ZIPs. The normal production ZIP has no fixture mechanism.
+
+Optional SSH transfer, only if you have already enabled and tested SSH:
+
+```sh
+scp dist-release/Decky-Direct-Updater.zip YOUR_USER@YOUR_DECK:Downloads/
+scp -r dist-release/local-fixture YOUR_USER@YOUR_DECK:Downloads/
+```
+
+Replace the placeholders with your actual account and host. No root or remote service restart is required. Do not use a deployment script that replaces installed plugin directories.
+
+## Install the normal build
+
+1. Return to Gaming Mode and open QAM with **…**.
+2. Select Decky's plug icon, open its gear/settings, and enable **Developer Mode** in **General** if the developer section is hidden. Labels can differ across Loader versions.
+3. Open Decky's **Developer** section, choose **Install Plugin from ZIP**, navigate to Downloads, and select `Decky-Direct-Updater.zip`.
+4. Review and accept Decky's installation prompt. Reopen QAM → Decky → **Decky Direct Updater** after it loads.
+5. Select **All** and confirm the list contains your installed plugins, including any disabled ones. Compare versions against their installed `package.json` (Decky uses that version). A malformed plugin must not hide the others.
+6. Before a first publication, this plugin's own source should be `nukeador/decky-direct-updater` with **No published release**. It must not show a fatal error just because the repository has no releases.
+
+If your Loader does not expose manual ZIP installation or the installer API used here, update Loader through its own supported flow or consult its documentation. The plugin must give a manual ZIP fallback instead of changing folders directly.
+
+## Check detection and interaction
+
+- If Decktation is installed, verify `silverfoxy/decktation` appears without text input.
+- If MAKO is installed, verify **MAKO - Frame Generation**, its installed version, and `eugeniosegala/MAKO`. Package name `mako-plugin`, repository name and display name may differ.
+- For a plugin with no source, select **Find source** using the controller. Candidate repositories must have an exact matching root or `plugin/plugin.json` manifest. If several match, select the intended author yourself with **Follow owner/repo**. Back out without selecting and verify no mapping was silently saved.
+- Reopen the panel and restart Decky through its normal UI if desired; confirmed sources must survive. Confirm settings are outside the installed plugin folder.
+- With Wi-Fi disabled, open the panel: local plugins must remain visible. A cached result may still appear. Wait at least one minute after the previous check, then press **Check for updates** to force revalidation: failures must say **Could not check for updates**, never **Up to date**. Restore Wi-Fi and retry.
+- A plugin equal to or ahead of its stable release should be **Up to date**. Missing archives and unknown versions should have their own unavailable status.
+- Navigate the entire list, source choices and buttons with the D-pad/joystick and A/B. Verify focus visibility, long names, QAM scrolling and readable errors.
+
+## Controlled self-update: 0.1.0 → 0.1.1
+
+These are explicit development builds with a fixed local data reader. No local HTTP server, token or published GitHub release is needed. The only production component replaced is the release/download provider; release selection, semantic comparison, archive validation, staging and the native installer adapter are exercised.
+
+1. In Desktop Mode, locate Decky's home folder. Use the directory containing its existing `plugins`, `settings`, `data` and `logs` directories; do not assume a username. The plugin runtime path is exposed to its backend as `DECKY_PLUGIN_RUNTIME_DIR`. For the packaged folder `decky-direct-updater`, it normally ends in `data/decky-direct-updater`.
+2. Create `local-fixture` inside that runtime directory. Copy `release.json` and `Decky-Direct-Updater-v0.1.1.zip` from the transferred local fixture directory into it. Leave the ZIP intact. Example, after substituting your actual Decky home:
+
+   ```sh
+   DECKY_TEST_HOME='/actual/path/to/homebrew'
+   mkdir -p "$DECKY_TEST_HOME/data/decky-direct-updater/local-fixture"
+   cp "$HOME/Downloads/local-fixture/release.json" \
+      "$HOME/Downloads/local-fixture/Decky-Direct-Updater-v0.1.1.zip" \
+      "$DECKY_TEST_HOME/data/decky-direct-updater/local-fixture/"
+   ```
+
+3. In Gaming Mode install `Downloads/local-fixture/Decky-Direct-Updater-v0.1.0.zip` using Decky's manual ZIP installation. Confirm **Installed: 0.1.0** and **Latest: 0.1.1** in the updater panel. Missing fixture files should produce an error, not fall back to an arbitrary download.
+4. If possible, confirm an unresolved plugin's source before upgrading. For a deterministic persistence probe, in Desktop Mode with the panel closed, add a harmless `"hardware_test_marker": "preserve-me"` top-level key to the existing settings `state.json` without changing `sources` or `cache`. Keep a backup. Its path normally ends in `settings/decky-direct-updater/state.json`.
+5. Press **Update** for **Decky Direct Updater**. Verify Decky's native prompt shows the correct plugin, version 0.1.1 and an update action. **Cancel** it. Reopen the panel and check again: installed version must remain 0.1.0; the updater must not claim success. The Update button must remain usable.
+6. Press **Update** again and **accept**. The updater may unload itself. Wait for Decky to reload it, then reopen QAM and verify **Installed: 0.1.1** and **Up to date**. Do not depend on the previous frontend instance remaining active.
+7. Recheck the saved source mapping and optional marker in the persistent settings file. Both should remain. Check logs for errors.
+8. Reinstall the normal production `Decky-Direct-Updater.zip` through Decky after the experiment; it is version 0.1.0, so this is a deliberate manual reinstall/downgrade. Remove the `local-fixture` runtime subdirectory when finished. The normal ZIP cannot read those fixtures.
+
+To repeat, reinstall the 0.1.0 fixture ZIP manually. Never publish these fixture ZIPs or their fake release response. Fixture files are absent from the production ZIP and release workflow inputs.
+
+## Logs and recovery
+
+Decky exposes the plugin's log directory as `DECKY_PLUGIN_LOG_DIR`, normally under its home at `logs/decky-direct-updater/`. Inspect the newest log in Desktop Mode. If SSH is already available, you can read that exact path remotely. Loader logs may be available in its normal troubleshooting UI or, on a systemd installation, with `journalctl -u plugin_loader --since '15 minutes ago'` if your account has permission. Do not assume root access.
+
+A refused archive has not been handed to Loader and should leave the installed plugin intact. Loader can still fail after confirmation; its replacement process is not transactional and this updater cannot guarantee rollback. Keep the known-good ZIP locally. Reinstall it through **Install Plugin from ZIP** if a plugin fails to load. If Decky itself stops working, follow Decky's official recovery procedure rather than manually editing plugins or restarting services from this project.
+
+Staged ZIPs remain available through confirmation and installation. Files older than 24 hours are cleaned on a later staging operation; canceling a prompt does not immediately remove them.
+
+Record Loader/SteamOS versions, the ZIP tested, controller behavior, observed source associations, canceled/accepted upgrade results and logs before approving any release.
+
+## GitHub limits regression
+
+Release checks, raw manifest validation and release downloads should continue without consuming GitHub REST core quota. Repository search uses its separate search quota and can still require a short wait. Repeated refreshes within one minute reuse cached results. An exhausted quota must show a retry delay rather than a Python exception.
+
+Confirm HelixSR Manager resolves its HelixSR-Manager.zip asset despite its different package name. Test preparing TabMaster only after the controlled fixture upgrade; cancellation must remain possible. Preparing an already listed update uses cached source metadata and must not force another REST release lookup.
+
+## Compact interface regression
+
+The default **Updates** view contains confirmed pending updates and unresolved sources with a question icon. Its count and the green dot still represent only actual updates. **All** includes every plugin and places updates first. Each row should remain two lines, with an ellipsis for long names and one status icon. Open a row to access its source and actions; selecting a row must never request an installation.
+
+Using the physical controller, test D-pad navigation and A to open details. Press B to return from details, including after following a source. The same row and scroll position should be restored. Scroll well down All, visit Updates, then return to All: both views should retain their own position. The compact segments use normal directional focus; no custom L1/R1 shortcut is implemented.
+
+Use the refresh icon while looking at a long list. Existing rows should remain visible and navigable; individual results arrive progressively, followed by the reconciled final result. Check that focus and scroll do not reset when those results arrive. Test Retry in a failed plugin's details, Find source for an unresolved plugin, Change source for a followed plugin, and Update only in confirmed update details. A prompt request must not be labeled as a completed installation.
+
+Browser checks use simulated Decky primitives. Physical B handling, D-pad scrolling, the native focus ring, touch, and SteamOS font scaling still require validation on the Deck.
+
+## Frozen Python and navigation groups
+
+The installable ZIP includes CPython's HTML parser, entity table and markup base with their license. A subprocess regression blocks the system `html` and `_markupbase` modules and imports the parser directly from the packaged ZIP. Source search and release checks must not depend on those optional Decky stdlib modules.
+
+On hardware, start with Updates, press Right through All to the refresh icon, then Left back. Move Down into All's list, and Up from its first row back to the header. Repeat after a refresh and after returning from details. Containers now declare native row/column flow and are not themselves focus targets. Physical controller verification remains required.
+
+## Release and layout regressions
+
+Verify CSS Loader resolves its repository despite stale template homepage links. A confirmed source must clear old conflict warnings. SteamGridDB should report no stable GitHub release when its source has none. Refreshes reuse cached parsed releases and check independent repositories concurrently.
+
+Open long details in the short QAM viewport and scroll through every action. Focused header controls must look distinct from the selected tab. Check these with the physical controller.
+
+Prepare an LSFG update and cancel the native installer confirmation first. A differing ZIP root must be normalized to the installed folder after identity/version/checksum validation. The package.json bytes, including remote_binary declarations, must be preserved for Decky to handle normally. Only accept the upgrade when ready to test it; preparation alone must not change installed files.
+
+
+## Manual releases and downgrade confirmation
+
+Local tests cover stable and prerelease SemVer (`dev`, `beta`, `rc`), non-comparable tags, missing and ambiguous ZIPs, both GitHub pagination formats, opaque frontend cursors, stale installed versions, changed sources, forged identifiers, manipulated release metadata, ZIP identity/version mismatches and confirmed downgrade staging. The same pipeline is tested using Direct Updater's own plugin identity. The UI store tests cover initial/four-hour checks without the panel, single-flight requests, progress, preserved positive results after errors, canonical source redirects and disposal.
+
+On the physical Deck (pending validation of the newly added UI):
+
+1. Open a plugin with a confirmed source, then **Install another version**. Use D-pad/A/B through releases and **Load more**, including a second/last page, slow loading and a failed load followed by Retry. Existing releases and scroll position should remain usable. Focus should stay on Load more, or move to the first newly loaded row when there are no further pages.
+2. Check the installed version is labeled and disabled, prereleases are labeled, and incompatible/ambiguous entries explain why they are disabled. A source without releases should display an empty result. Tags such as `nightly` must not become installable.
+3. Select an older version. Verify both versions appear in the warning. Initial focus is on Cancel. Cancel or B must stage nothing and return focus/scroll to that release. Explicit confirmation may prepare the ZIP, followed by Decky's own downgrade prompt. Cancel that native prompt and recheck: the installed version must remain unchanged.
+4. Accept a controlled upgrade/downgrade only when ready. Read back the actually installed version after refreshing. A message saying **Confirmation requested** must never say installation completed. Choosing a prerelease must not subscribe to prereleases or pin it; Update and automatic checks still select newer stable releases only.
+5. Repeat the existing local self-update fixture procedure (0.1.0 → 0.1.1), including cancellation. Direct Updater must reload using the same installer path as any other plugin. Actual self-install and native confirmation remain hardware checks, not automatic installation tests.
+6. Return to Decky's general plugin list. Verify the green dot is attached to Direct Updater's icon at its upper right. It should appear after a successful background check with the panel closed, persist after opening the panel or requesting/canceling an update, survive a later failed lookup, and disappear after a valid recheck finds no pending stable updates. Test again after restarting/reloading the plugin. Physical icon placement is pending.
+7. Leave the panel closed for four hours (or use a development-only shortened timer outside the production package) and verify the next check runs once. Opening/refreshing during a check must reuse it. Unload/reload and ensure old timers/listeners no longer issue checks or update the UI.
+
+Browser validation uses simulated Decky controls and a native-installer stub. It can verify key activation/Escape, focus restoration, loading/error states, paging, warning cancellation, shared badge state and request arguments. Steam's directional focus behavior and actual Loader prompts require the physical checks above.
+
+
+## Plug-and-play discovery
+
+Automated tests use mocked network responses for first launch, local repository and secondary/plugin.json hints, official database matching, conflicting forks and redirects, confirmed precedence, negative/positive search caching, new/removed plugins, metadata changes, reused directories, legacy hints, offline behavior/backoff, search quota errors, author-qualified searches, manual entry verification and rejected candidate identifiers. They assert that discovery does not download/stage/install anything and that normal self-update preserves settings.
+
+Physical checks for this feature remain pending:
+
+1. Back up Direct Updater's settings, then test a fresh settings directory using Decky's supported setup. Open Direct Updater: local inventory should appear immediately and confident sources should be checked without an initial detection button. Keep unresolved plugins visible in All. No modal or installation prompt should appear.
+2. Open a suggested plugin, navigate to one of the candidate repositories with D-pad/A and select **Use this source**. Its release status should update and survive reopening/reloading. Try multiple candidates, Search again, a missing match and Enter repository → Verify source → Use this source. Verifying alone must not associate or install anything.
+3. Install/remove a separate test plugin through Decky's UI and reopen the panel. The inventory should reflect it, without losing prior confirmed sources or redoing unchanged searches. Repeated openings should reuse GitHub caches; stable update checks remain prioritized ahead of automatic searches.
+4. Test a known fork whose local metadata differs from the official database. The updater must ask you to choose, not silently switch it. After confirmation, changing local repository hints or refreshing the upstream index must not override the confirmed mapping.
+5. Disconnect networking. Installed plugins and valid cached mappings should remain available; lookup errors belong to the affected plugin. Reconnect and retry through Find source. A rate limit must preserve its retry message, not surface a Python exception or initiate a burst of searches.
+6. Perform the existing controlled self-update fixture test and verify confirmed associations survive. Older name-only mappings without sufficient local identity evidence may appear as suggestions once; their stored values are retained until reviewed.
+
+A read-only SSH smoke test with isolated temporary settings exercised actual installed metadata and upstream discovery. It does not verify Steam's directional focus, virtual keyboard or live installer behavior. Do not delete real settings or replace installed plugin directories to run development diagnostics.
+
+README screenshots were captured from the running Direct Updater panel on a Steam Deck through its local CEF debugger, cropped to the plugin panel and visually checked to exclude account names, avatars, notifications and other desktop content. They show pending updates and plugin details; no installation was started to obtain them.

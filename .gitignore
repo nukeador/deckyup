@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-release/
+__pycache__/
+*.pyc
+.venv/
+.ruff_cache/
+.pnpm-store/
+
+.DS_Store

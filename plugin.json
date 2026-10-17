@@ -1,0 +1,11 @@
+{
+  "name": "Decky Direct Updater",
+  "version": "0.1.1",
+  "author": "nukeador",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["utilities"],
+    "description": "Keep your Decky plugins up to date directly from their developers."
+  }
+}
