@@ -8,3 +8,6 @@ __pycache__/
 .pnpm-store/
 
 .DS_Store
+
+_site/
+.pages-*/

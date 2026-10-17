@@ -139,3 +139,7 @@ Debug logs distinguish REST search, repository metadata, public release/manifest
 The real compiled frontend was also exercised in a local browser with mocked Decky/GitHub: opening and typing 0 search RPCs; one submit 1; Show more, details, Back and reopening remained at 1. Back restored the selected row and ten-row window. Opening details made no installer call. Native INSTALL mode 0 was requested only on Install; a simulated completion event called inventory confirmation and updated the UI. These counts do not claim manifests, public release metadata or ZIP downloads are eliminated.
 
 Validation: `python3 -m unittest discover -s tests -q` (120 tests), `pnpm test` (35 tests), `pnpm typecheck`, `pnpm lint`, `ruff check .`, `ruff format --check .`, `bash scripts/build-local.sh`, `python3 scripts/validate-package.py dist-release/Decky-Direct-Updater.zip`, `python3 scripts/check-version.py`. Physical controller navigation, SteamOS keyboard, real native confirmation/cancellation and actual installation/self-update remain hardware checks; see the testing guide. Nothing has been committed or published for this build.
+
+## Website
+
+The static installation website, verified release ZIP build, Pages workflow and publishing checklist are documented in [Website and permanent installer](website.md). Website-only changes never create plugin releases.

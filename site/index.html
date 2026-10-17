@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="{{lang}}" data-default-entry="{{default_entry}}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{title}}</title>
+    <meta name="description" content="{{description}}" />
+    <link rel="canonical" href="{{canonical}}" />
+    {{alternates}}
+    <meta property="og:title" content="{{title}}" />
+    <meta property="og:description" content="{{description}}" />
+    <meta property="og:url" content="{{canonical}}" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#14171b" />
+    <link rel="stylesheet" href="{{prefix}}styles.css" />
+    <script src="{{prefix}}script.js" type="module"></script>
+  </head>
+  <body
+    data-copy-label="{{copied}}"
+    data-copy-success="{{copy_success}}"
+    data-copy-error="{{copy_error}}"
+  >
+    <a class="skip-link" href="#main">{{skip}}</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="{{prefix}}"
+        >Decky <strong>Direct Updater</strong></a
+      >
+      <div class="header-tools">
+        <a
+          class="header-link github-link"
+          href="https://github.com/nukeador/decky-direct-updater"
+          aria-label="GitHub"
+        >
+          <img
+            class="github-icon"
+            src="{{prefix}}vendor/fontawesome/github.svg"
+            width="24"
+            height="24"
+            alt=""
+            aria-hidden="true"
+          />
+        </a>
+        <label class="sr-only" for="language-select">{{language}}</label>
+        <select id="language-select">
+          {{language_options}}
+        </select>
+      </div>
+    </header>
+    <noscript
+      ><nav class="language-links wrap" aria-label="{{language}}">
+        {{language_links}}
+      </nav></noscript
+    >
+    <main id="main" class="wrap">
+      <section class="hero" aria-labelledby="headline">
+        <h1 id="headline">
+          {{hero_title}}<br /><span>{{hero_emphasis}}</span>
+        </h1>
+        <p class="intro">{{hero_intro}}</p>
+        <div class="hero-actions">
+          <button type="button" class="button button-primary" data-copy>
+            {{copy_install}} <span aria-hidden="true">⧉</span>
+          </button>
+          <a class="download-link" href="{{prefix}}install.zip" download
+            >{{download_zip}} <span aria-hidden="true">↓</span></a
+          >
+        </div>
+        <p
+          class="copy-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        ></p>
+      </section>
+      <section class="product" aria-labelledby="product-heading">
+        <div class="product-copy">
+          <h2 id="product-heading">{{updates_title}}</h2>
+          <p>{{updates_text}}</p>
+        </div>
+        <div class="screenshots">
+          <figure>
+            <a href="{{prefix}}images/updates.png" aria-label="{{updates_full}}"
+              ><img
+                src="{{prefix}}images/updates.png"
+                width="948"
+                height="1179"
+                alt="{{updates_alt}}"
+                fetchpriority="high"
+            /></a>
+            <figcaption>{{updates_caption}}</figcaption>
+          </figure>
+          <figure>
+            <a
+              href="{{prefix}}images/plugin-details.png"
+              aria-label="{{details_full}}"
+              ><img
+                src="{{prefix}}images/plugin-details.png"
+                width="948"
+                height="1179"
+                alt="{{details_alt}}"
+                loading="lazy"
+            /></a>
+            <figcaption>{{details_caption}}</figcaption>
+          </figure>
+        </div>
+      </section>
+      <section
+        id="install"
+        class="installation"
+        aria-labelledby="install-heading"
+      >
+        <div class="section-heading">
+          <h2 id="install-heading">{{install_title}}</h2>
+          <a class="text-link" href="https://decky.xyz/"
+            >{{need_decky}} <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <ol class="steps">
+          <li>
+            <div>
+              <h3>{{step1_title}}</h3>
+              <p>{{step1}}</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>{{step2_title}}</h3>
+              <p>{{step2}}</p>
+              <div class="url-field">
+                <label class="sr-only" for="install-url">{{install_url}}</label>
+                <input
+                  id="install-url"
+                  type="text"
+                  value="https://deckyup.nukeador.com/install.zip"
+                  readonly
+                  spellcheck="false"
+                />
+                <button type="button" class="button button-copy" data-copy>
+                  {{copy}}
+                </button>
+              </div>
+              <p>{{step2_confirm}}</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>{{step3_title}}</h3>
+              <p>{{step3}}</p>
+            </div>
+          </li>
+        </ol>
+        <p class="alternative">{{zip_alternative}}</p>
+      </section>
+      <section class="features discovery" aria-labelledby="features-heading">
+        <div>
+          <h2 id="features-heading">{{find_title}}</h2>
+          <p class="feature-intro">{{find_text}}</p>
+          <div class="developers">
+            <h2 id="developers-heading">{{developers_title}}</h2>
+            <p>{{developers_text}}</p>
+          </div>
+        </div>
+        <figure class="find-screenshot">
+          <a
+            href="{{prefix}}images/find-plugins.png"
+            aria-label="{{find_screen}}"
+            ><img
+              src="{{prefix}}images/find-plugins.png"
+              width="948"
+              height="1302"
+              alt="{{find_screen}}"
+              loading="lazy"
+          /></a>
+          <figcaption>{{find_caption}}</figcaption>
+        </figure>
+        <p class="trust-note">{{trust}}</p>
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <nav aria-label="{{project_links}}">
+        <a
+          class="github-link"
+          href="https://github.com/nukeador/decky-direct-updater"
+          aria-label="GitHub"
+          ><img
+            class="github-icon"
+            src="{{prefix}}vendor/fontawesome/github.svg"
+            width="22"
+            height="22"
+            alt=""
+            aria-hidden="true"
+        /></a>
+        <a href="https://github.com/nukeador/decky-direct-updater/releases"
+          >{{releases}}</a
+        >
+        <a href="https://github.com/nukeador/decky-direct-updater/issues"
+          >{{issue}}</a
+        >
+      </nav>
+      <p>
+        {{community}} <span aria-hidden="true">·</span>
+        <a
+          href="https://github.com/nukeador/decky-direct-updater/blob/main/LICENSE"
+          >AGPL-3.0-only</a
+        >
+      </p>
+    </footer>
+  </body>
+</html>

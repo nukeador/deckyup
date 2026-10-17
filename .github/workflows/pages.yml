@@ -1,0 +1,66 @@
+name: Website on GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "scripts/build-pages.py"
+      - "scripts/site_locales.py"
+      - "scripts/validate-package.py"
+      - "direct_updater/package_validation.py"
+      - "docs/images/find-plugins.png"
+      - "docs/images/updates.png"
+      - "docs/images/plugin-details.png"
+      - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows: ["Deliberate version release"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.path == '.github/workflows/release.yml' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Validate site and installer build
+        run: python3 -m unittest discover -s tests -p test_pages.py -q
+      - uses: actions/configure-pages@v6
+        with:
+          enablement: false
+      - name: Build site with verified latest stable installer
+        run: python3 scripts/build-pages.py
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy verified website
+        id: deployment
+        uses: actions/deploy-pages@v5
