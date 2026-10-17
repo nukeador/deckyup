@@ -9,7 +9,7 @@ Follow the [quick installation guide](https://deckyup.nukeador.com/). You need [
 1. Open **Decky → Settings → General** and enable **Developer Mode**.
 2. Open the **Developer** tab and install using either option:
    - **URL:** paste the address below into **Install Plugin from URL** and confirm.
-   - **ZIP fallback:** [download the latest ZIP](https://github.com/nukeador/decky-direct-updater/releases/latest/download/Decky-Direct-Updater.zip), then select it with **Install Plugin from ZIP**.
+   - **ZIP fallback:** [download the latest ZIP](https://github.com/nukeador/deckyup/releases/latest/download/Decky-Direct-Updater.zip), then select it with **Install Plugin from ZIP**.
 3. Open **Direct Updater**. It finds your installed plugins and checks for updates automatically.
 
 ```text
@@ -49,7 +49,7 @@ Search can include projects that are not Decky plugins. Compatibility is checked
   <img src="docs/images/plugin-details.png" width="300" alt="Plugin details with installed and latest versions and the Update button" />
 </p>
 
-[Latest release](https://github.com/nukeador/decky-direct-updater/releases/latest) · [Testing and troubleshooting](docs/steam-deck-testing.md) · [Development](docs/development.md)
+[Latest release](https://github.com/nukeador/deckyup/releases/latest) · [Testing and troubleshooting](docs/steam-deck-testing.md) · [Development](docs/development.md)
 
 Independent community project, not affiliated with Decky Loader. [GNU AGPL v3 license](LICENSE).
 

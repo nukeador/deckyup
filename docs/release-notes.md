@@ -5,7 +5,7 @@ Update your installed Decky plugins directly from their developers, without down
 Enable **Developer Mode** in **Decky → Settings → General**, then open **Developer** and install from this URL:
 
 ```text
-https://github.com/nukeador/decky-direct-updater/releases/latest/download/Decky-Direct-Updater.zip
+https://github.com/nukeador/deckyup/releases/latest/download/Decky-Direct-Updater.zip
 ```
 
 Or download **Decky-Direct-Updater.zip** below and use **Install Plugin from ZIP**.

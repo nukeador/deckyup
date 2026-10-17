@@ -30,7 +30,7 @@ Replace the placeholders with your actual account and host. No root or remote se
 3. Open Decky's **Developer** section, choose **Install Plugin from ZIP**, navigate to Downloads, and select `Decky-Direct-Updater.zip`.
 4. Review and accept Decky's installation prompt. Reopen QAM → Decky → **Decky Direct Updater** after it loads.
 5. Select **All** and confirm the list contains your installed plugins, including any disabled ones. Compare versions against their installed `package.json` (Decky uses that version). A malformed plugin must not hide the others.
-6. Before a first publication, this plugin's own source should be `nukeador/decky-direct-updater` with **No published release**. It must not show a fatal error just because the repository has no releases.
+6. Confirm the updater finds its own GitHub source. Older package metadata may still name `nukeador/decky-direct-updater`; GitHub redirects that repository to `nukeador/deckyup`. For the no-release case, use a test repository with no published releases; it must not show a fatal error just because that repository has no releases.
 
 If your Loader does not expose manual ZIP installation or the installer API used here, update Loader through its own supported flow or consult its documentation. The plugin must give a manual ZIP fallback instead of changing folders directly.
 

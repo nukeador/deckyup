@@ -1,12 +1,12 @@
 # Website and permanent installer
 
-The static website lives in `site/index.html`, `site/styles.css`, `site/script.js`, `site/language.js` and the dictionaries in `site/locales/`. It uses local system fonts, real unchanged Steam Deck screenshots and no framework, external requests, tracking or cookies. Pending updates and plugin details are the main visual; the copy explains automatic installed-plugin/source discovery and displays the Find Plugins screenshot. Source discovery may need the user's confirmation and cannot resolve every plugin.
+The static website lives in `site/index.html`, `site/styles.css`, `site/script.js`, `site/language.js` and the dictionaries in `site/locales/`. It uses local system fonts, real unchanged Steam Deck screenshots and no framework, external requests, tracking or cookies. Pending updates and plugin details are the main visual; the copy explains automatic installed-plugin/source discovery and displays the Find Plugins screenshot. The SVG favicon and 1200×630 social preview reuse the app's download icon. Source discovery may need the user's confirmation and cannot resolve every plugin.
 
 Public addresses:
 
 - Website: https://deckyup.nukeador.com/
 - Installer: https://deckyup.nukeador.com/install.zip
-- GitHub Pages fallback: https://nukeador.github.io/decky-direct-updater/
+- GitHub Pages fallback: https://nukeador.github.io/deckyup/
 
 ## Build and preview locally
 
@@ -49,7 +49,7 @@ python3 scripts/validate-package.py _site/install.zip 0.1.5
 
 The last version argument must match the downloaded stable release (printed by build-pages), even if local plugin metadata is newer. Website tests use mocked releases and test missing/duplicate/untrusted assets, drafts/prereleases, corrupt downloads, HTML masquerading as a ZIP, package structure, unchanged installer bytes, balanced HTML, project-relative links, image alt text/dimensions and workflow guards.
 
-Browser validation uses the built site under `/decky-direct-updater/`. Checks include 320, 375, 768 and 1280-pixel widths (including a 1280×800 Steam Deck-sized viewport), screenshot loading, overflow, keyboard focus, copy feedback without navigation, denied/unavailable clipboard fallback, and a real local ZIP download. Desktop and mobile screenshots are inspected. A run with the site script blocked verifies the static instructions, URL and download links remain available; it does not claim a physical Steam Deck browser test.
+Browser validation uses the built site under `/deckyup/`. Checks include 320, 375, 768 and 1280-pixel widths (including a 1280×800 Steam Deck-sized viewport), screenshot loading, overflow, keyboard focus, copy feedback without navigation, denied/unavailable clipboard fallback, and a real local ZIP download. Desktop and mobile screenshots are inspected. A run with the site script blocked verifies the static instructions, URL and download links remain available; it does not claim a physical Steam Deck browser test.
 
 Before publication, the build was exercised against the real stable v0.1.5 release. The copied installer checksum was `a1e189769f3a690abd0961c770118e128c0c9dc00a5269518b94b96d3a4e6649`. Normal future builds resolve a fresh release instead of pinning that version or digest.
 
@@ -63,7 +63,7 @@ Run these checks after a Pages deployment:
 mkdir -p /tmp/ddu-pages-check
 curl --fail --location https://deckyup.nukeador.com/ -o /tmp/ddu-pages-check/index.html
 curl --fail --location https://deckyup.nukeador.com/install.zip -o /tmp/ddu-pages-check/Decky-Direct-Updater.zip
-gh release download --repo nukeador/decky-direct-updater --pattern SHA256SUMS --dir /tmp/ddu-pages-check --clobber
+gh release download --repo nukeador/deckyup --pattern SHA256SUMS --dir /tmp/ddu-pages-check --clobber
 (cd /tmp/ddu-pages-check && shasum -a 256 -c SHA256SUMS)
 python3 scripts/validate-package.py /tmp/ddu-pages-check/Decky-Direct-Updater.zip 0.1.5
 ```

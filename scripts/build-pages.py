@@ -20,7 +20,7 @@ from direct_updater.tls import github_ssl_context
 from direct_updater.versions import Version
 from scripts.site_locales import render_pages
 
-REPOSITORY = "nukeador/decky-direct-updater"
+REPOSITORY = "nukeador/deckyup"
 LATEST = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 ASSET = "Decky-Direct-Updater.zip"
 IMAGES = ("updates.png", "plugin-details.png", "find-plugins.png")

@@ -300,7 +300,12 @@ class FindPlugins(Workspace):
 
     def test_direct_normalization(self):
         self.assertEqual(
-            query_identity("https://github.com/Nukeador/decky-direct-updater.git/"), (REPO, True)
+            query_identity("https://github.com/Nukeador/deckyup.git/"),
+            ("nukeador/deckyup", True),
+        )
+        self.assertEqual(
+            query_identity("https://github.com/Nukeador/decky-direct-updater.git/"),
+            (REPO, True),
         )
         self.assertEqual(Version("0.1.1"), Version("v0.1.1"))
 

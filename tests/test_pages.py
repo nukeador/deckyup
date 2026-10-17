@@ -1,6 +1,7 @@
 """Static site and release verification tests, with no network requests."""
 
 import hashlib
+import html
 import importlib.util
 import io
 import json
@@ -53,7 +54,7 @@ def package():
 class Document(HTMLParser):
     def __init__(self, html):
         super().__init__()
-        self.links, self.ids, self.images, self.buttons = [], [], [], []
+        self.links, self.ids, self.images, self.buttons, self.metas = [], [], [], [], []
         self.stack = []
         self.feed(html)
         if self.stack:
@@ -69,6 +70,8 @@ class Document(HTMLParser):
             self.ids.append(attrs["id"])
         if tag in {"a", "link", "script"}:
             self.links.append(attrs.get("href", attrs.get("src")))
+        if tag == "meta":
+            self.metas.append(attrs)
         if tag == "img":
             self.images.append(attrs)
         if tag == "button":
@@ -120,6 +123,42 @@ class Pages(unittest.TestCase):
         self.assertTrue((self.output / ".nojekyll").is_file())
         self.assertEqual((self.output / "CNAME").read_text().strip(), "deckyup.nukeador.com")
 
+    def test_favicon_and_social_preview_are_copied_and_linked(self):
+        pages.build(self.output, self.fetch)
+        markup = (self.output / "index.html").read_text()
+        doc = Document(markup)
+        self.assertIn('href="./favicon.svg"', markup)
+        self.assertIn('href="./favicon-32.png"', markup)
+        self.assertIn('href="./favicon.ico"', markup)
+        self.assertIn("AGPL v3", markup)
+        self.assertNotIn("AGPL-3.0-only", markup)
+        self.assertIn(
+            {
+                "property": "og:image",
+                "content": "https://deckyup.nukeador.com/social-preview.png",
+            },
+            doc.metas,
+        )
+        self.assertIn(
+            {"name": "twitter:card", "content": "summary_large_image"}, doc.metas
+        )
+        self.assertEqual(
+            (self.output / "favicon.svg").read_bytes(),
+            (ROOT / "site/favicon.svg").read_bytes(),
+        )
+        for filename in ("favicon-32.png", "favicon.ico", "social-preview.png"):
+            self.assertEqual(
+                (self.output / filename).read_bytes(),
+                (ROOT / "site" / filename).read_bytes(),
+            )
+        social_png = (self.output / "social-preview.png").read_bytes()
+        self.assertEqual(social_png[:8], b"\x89PNG\r\n\x1a\n")
+        dimensions = (
+            int.from_bytes(social_png[16:20], "big"),
+            int.from_bytes(social_png[20:24], "big"),
+        )
+        self.assertEqual(dimensions, (1200, 630))
+
     def test_missing_duplicate_or_untrusted_assets_fail_without_output(self):
         for assets in (
             [],
@@ -169,9 +208,15 @@ class Pages(unittest.TestCase):
         pages.build(self.output, self.fetch)
         doc = Document((self.output / "index.html").read_text())
         self.assertEqual(doc.install_url, "https://deckyup.nukeador.com/install.zip")
+        self.assertEqual(pages.REPOSITORY, "nukeador/deckyup")
+        self.assertIn("https://github.com/nukeador/deckyup/releases", doc.links)
         downloads = [link for link in doc.links if link == "./install.zip"]
         self.assertEqual(len(downloads), 2)
+        self.assertIn("#install", doc.links)
         self.assertEqual(sum("data-copy" in button for button in doc.buttons), 2)
+        script = (ROOT / "site/script.js").read_text()
+        self.assertIn("document.body.dataset.copyError", script)
+        self.assertNotIn("Select and copy the installation URL below.", script)
         for link in doc.links:
             if link.startswith("#"):
                 self.assertIn(link[1:], doc.ids)
@@ -211,16 +256,38 @@ class Pages(unittest.TestCase):
         from scripts.site_locales import LOCALES
 
         pages.build(self.output, self.fetch)
+        from scripts.site_locales import dictionaries
+
+        translations = dictionaries(ROOT / "site")
         for code, (tag, _) in LOCALES.items():
             page = self.output / code / "index.html"
             markup = page.read_text()
+            document = Document(markup)
             self.assertIn(f'lang="{tag}"', markup)
             self.assertIn('data-default-entry="false"', markup)
             self.assertNotIn("{{", markup)
             self.assertIn('href="../install.zip"', markup)
+            self.assertIn('href="#install"', markup)
+            self.assertIn('href="../favicon.svg"', markup)
+            self.assertIn('href="../favicon-32.png"', markup)
+            self.assertIn('href="../favicon.ico"', markup)
+            self.assertIn(
+                {
+                    "property": "og:image",
+                    "content": "https://deckyup.nukeador.com/social-preview.png",
+                },
+                document.metas,
+            )
+            self.assertIn(
+                f'data-copy-error="{html.escape(translations[code]["copy_error"], quote=True)}"',
+                markup,
+            )
+            self.assertIn(html.escape(translations[code]["how_install"]), markup)
+            self.assertIn(html.escape(translations[code]["community"]), markup)
+            self.assertIn("AGPL v3", markup)
+            self.assertNotIn("AGPL-3.0-only", markup)
             self.assertIn('src="../images/find-plugins.png"', markup)
             self.assertIn('href="../' + code + '/"', markup)
-            document = Document(markup)
             self.assertEqual(document.install_url, "https://deckyup.nukeador.com/install.zip")
             for link in document.links:
                 if link.startswith("#"):

@@ -47,7 +47,7 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
     } catch {
       installURL.focus();
       installURL.select();
-      status.textContent = "Select and copy the installation URL below.";
+      status.textContent = document.body.dataset.copyError;
     }
     timers.set(
       button,

@@ -7,10 +7,34 @@
     <meta name="description" content="{{description}}" />
     <link rel="canonical" href="{{canonical}}" />
     {{alternates}}
+    <link rel="icon" type="image/svg+xml" href="{{prefix}}favicon.svg" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="{{prefix}}favicon-32.png"
+    />
+    <link rel="icon" href="{{prefix}}favicon.ico" sizes="any" />
     <meta property="og:title" content="{{title}}" />
     <meta property="og:description" content="{{description}}" />
     <meta property="og:url" content="{{canonical}}" />
     <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://deckyup.nukeador.com/social-preview.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="{{title}}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{title}}" />
+    <meta name="twitter:description" content="{{description}}" />
+    <meta
+      name="twitter:image"
+      content="https://deckyup.nukeador.com/social-preview.png"
+    />
+    <meta name="twitter:image:alt" content="{{title}}" />
     <meta name="theme-color" content="#14171b" />
     <link rel="stylesheet" href="{{prefix}}styles.css" />
     <script src="{{prefix}}script.js" type="module"></script>
@@ -28,7 +52,7 @@
       <div class="header-tools">
         <a
           class="header-link github-link"
-          href="https://github.com/nukeador/decky-direct-updater"
+          href="https://github.com/nukeador/deckyup"
           aria-label="GitHub"
         >
           <img
@@ -64,6 +88,7 @@
           <a class="download-link" href="{{prefix}}install.zip" download
             >{{download_zip}} <span aria-hidden="true">↓</span></a
           >
+          <a class="install-howto-link" href="#install">{{how_install}}</a>
         </div>
         <p
           class="copy-status"
@@ -180,7 +205,7 @@
       <nav aria-label="{{project_links}}">
         <a
           class="github-link"
-          href="https://github.com/nukeador/decky-direct-updater"
+          href="https://github.com/nukeador/deckyup"
           aria-label="GitHub"
           ><img
             class="github-icon"
@@ -190,18 +215,13 @@
             alt=""
             aria-hidden="true"
         /></a>
-        <a href="https://github.com/nukeador/decky-direct-updater/releases"
-          >{{releases}}</a
-        >
-        <a href="https://github.com/nukeador/decky-direct-updater/issues"
-          >{{issue}}</a
-        >
+        <a href="https://github.com/nukeador/deckyup/releases">{{releases}}</a>
+        <a href="https://github.com/nukeador/deckyup/issues">{{issue}}</a>
       </nav>
       <p>
         {{community}} <span aria-hidden="true">·</span>
-        <a
-          href="https://github.com/nukeador/decky-direct-updater/blob/main/LICENSE"
-          >AGPL-3.0-only</a
+        <a href="https://github.com/nukeador/deckyup/blob/main/LICENSE"
+          >AGPL v3</a
         >
       </p>
     </footer>
