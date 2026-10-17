@@ -13,7 +13,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { FaDownload, FaSyncAlt, FaSearch } from "react-icons/fa";
+import { FaDownload, FaSyncAlt, FaSearch, FaCheck } from "react-icons/fa";
 import {
   requestUpdate,
   requestSelfUpdate,
@@ -376,11 +376,32 @@ function Content({
               }
             />
           ))}
-          {!visible.length && (
-            <div className="ddu-empty" role="status">
-              {emptyMessage(plugins, refreshing, loadFailed)}
-            </div>
-          )}
+          {!visible.length &&
+            navigation.view === "updates" &&
+            !refreshing &&
+            !loadFailed &&
+            plugins.length > 0 &&
+            plugins.every((plugin) => plugin.status === "current") && (
+              <div className="ddu-success-empty" role="status">
+                <div className="ddu-success-icon" aria-hidden="true">
+                  <FaCheck />
+                </div>
+                <strong>You're up to date</strong>
+                <span>All your plugins are on their latest versions.</span>
+              </div>
+            )}
+          {!visible.length &&
+            !(
+              navigation.view === "updates" &&
+              !refreshing &&
+              !loadFailed &&
+              plugins.length > 0 &&
+              plugins.every((plugin) => plugin.status === "current")
+            ) && (
+              <div className="ddu-empty" role="status">
+                {emptyMessage(plugins, refreshing, loadFailed)}
+              </div>
+            )}
         </NavigationGroup>
       </NavigationGroup>
       <FindPlugins

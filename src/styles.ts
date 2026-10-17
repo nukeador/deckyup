@@ -27,6 +27,10 @@ export const styles = `
 .ddu-tab.ddu-focused, .ddu-tab:focus, .ddu-icon-button.ddu-focused, .ddu-icon-button:focus { background: #fff; color: #171d25; outline: 2px solid #fff; }
 .ddu-tab[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--gpColor-Blue, #1a9fff); }
 .ddu-empty { padding: 18px 12px; color: var(--gpSystemLightGrey, #a9b1bc); line-height: 1.5; }
+.ddu-success-empty { min-height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px; padding: 24px 12px 48px; text-align: center; }
+.ddu-success-icon { display: flex; align-items: center; justify-content: center; width: 88px; height: 88px; margin-bottom: 8px; border-radius: 50%; color: #79cfa1; background: rgba(91, 183, 132, .13); border: 2px solid rgba(121, 207, 161, .38); font-size: 36px; }
+.ddu-success-empty strong { color: var(--gpSystemLightestGrey, #dcdedf); font-size: 1.25rem; font-weight: 600; }
+.ddu-success-empty span { color: var(--gpSystemLightGrey, #a9b1bc); font-size: .85rem; line-height: 1.5; }
 .ddu-notice { margin: 0 16px 8px; font-size: .8rem; color: var(--gpSystemLightGrey, #a9b1bc); }
 .ddu-details { flex: 1; min-height: 0; width: 100%; padding: 0 16px 32px; overflow-y: auto; }
 .ddu-back { display: inline-flex; gap: 6px; align-items: center; padding: 8px 4px; margin-bottom: 8px; cursor: pointer; }
