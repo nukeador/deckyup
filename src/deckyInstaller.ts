@@ -74,6 +74,48 @@ const moduleFrontend: SelfUpdateFrontend = {
   instance: crypto.randomUUID(),
 };
 
+interface LoaderPanelPlugin {
+  name: string;
+  version?: string;
+}
+interface LoaderPanelState {
+  plugins: LoaderPanelPlugin[];
+  deckyState: {
+    closeActivePlugin(): void;
+    setActivePlugin(name: string): void;
+  };
+}
+
+/** QAM visibility and Loader's selected plugin are separate state. */
+export function selfUpdatePanel(
+  version: string,
+  loader: LoaderPanelState | undefined = typeof window === "undefined"
+    ? undefined
+    : (window as unknown as { DeckyPluginLoader?: LoaderPanelState })
+        .DeckyPluginLoader,
+) {
+  const available = () =>
+    Array.isArray(loader?.plugins) &&
+    loader.plugins.some(
+      (plugin) => plugin.name === SELF_NAME && plugin.version === version,
+    ) &&
+    typeof loader.deckyState?.closeActivePlugin === "function" &&
+    typeof loader.deckyState?.setActivePlugin === "function";
+  if (!available()) return null;
+  return {
+    close() {
+      if (!available()) return false;
+      loader!.deckyState.closeActivePlugin();
+      return true;
+    },
+    select() {
+      if (!available()) return false;
+      loader!.deckyState.setActivePlugin(SELF_NAME);
+      return true;
+    },
+  };
+}
+
 function session(): Storage | undefined {
   try {
     return typeof window === "undefined" ? undefined : window.sessionStorage;
@@ -156,10 +198,20 @@ export async function reopenAfterSelfUpdate(
     )
       return;
     if (!isActive() || storage.getItem(SELF_REOPEN_KEY) !== raw) return;
-    storage.removeItem(SELF_REOPEN_KEY);
+    const panel = selfUpdatePanel(pending.version);
+    if (!panel?.close()) return;
     navigation.CloseSideMenus();
+    // Let Loader render its cleared selection before selecting the replacement.
     setTimeout(() => {
-      if (isActive()) navigation.OpenQuickAccessMenu(999);
+      if (!isActive() || storage.getItem(SELF_REOPEN_KEY) !== raw) return;
+      try {
+        if (!panel.select()) return;
+        navigation.OpenQuickAccessMenu(999);
+        if (storage.getItem(SELF_REOPEN_KEY) === raw)
+          storage.removeItem(SELF_REOPEN_KEY);
+      } catch {
+        // Keep the handoff pending if Loader cannot select/open its new content yet.
+      }
     }, 100);
   } catch {
     // Preserve the marker for a later mount if inventory is temporarily unavailable.

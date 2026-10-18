@@ -4,8 +4,34 @@ import {
   requestUpdate,
   requestSelfUpdate,
   reopenAfterSelfUpdate,
+  selfUpdatePanel,
   type Router,
 } from "../src/deckyInstaller";
+
+function loaderPanelFixture(version: string) {
+  type Plugin = { name: string; version: string; content: object };
+  const replacement: Plugin = {
+    name: "Decky Direct Updater",
+    version,
+    content: {},
+  };
+  const plugins = [replacement];
+  const deckyState = {
+    activePlugin: {
+      ...replacement,
+      version: "previous",
+      content: {},
+    } as Plugin | null,
+    closeActivePlugin() {
+      this.activePlugin = null;
+    },
+    setActivePlugin(name: string) {
+      this.activePlugin =
+        plugins.find((plugin) => plugin.name === name) ?? null;
+    },
+  };
+  return { plugins, deckyState };
+}
 
 const update = {
   security_authorized: true,
@@ -135,6 +161,7 @@ test("self-update reopens Decky only when installed version matches", async () =
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
+      DeckyPluginLoader: loaderPanelFixture(update.version),
       sessionStorage: {
         getItem: (key: string) => values.get(key) ?? null,
         setItem: (key: string, value: string) => {
@@ -168,6 +195,7 @@ test("self-update reopens Decky only when installed version matches", async () =
       { version: self.version, instance: "replacement" },
     );
     assert.equal(closed, 1);
+    await new Promise((resolve) => setTimeout(resolve, 120));
     await reopenAfterSelfUpdate(
       async () => [{ name: self.name, version: self.version }],
       navigation,
@@ -260,7 +288,10 @@ test("self-update ignores the old frontend even after files change, and preserve
   };
   Object.defineProperty(globalThis, "window", {
     configurable: true,
-    value: { sessionStorage: storage },
+    value: {
+      sessionStorage: storage,
+      DeckyPluginLoader: loaderPanelFixture("0.2.1"),
+    },
   });
   try {
     const self = { ...update, name: "Decky Direct Updater", version: "0.2.1" };
@@ -327,7 +358,11 @@ test("self-update ignores the old frontend even after files change, and preserve
       () => active,
     );
     assert.equal(closed, 1);
-    assert.equal(values.size, 0);
+    assert.equal(
+      values.size,
+      1,
+      "handoff remains pending until the replacement is selected",
+    );
     active = false;
     await new Promise((resolve) => setTimeout(resolve, 120));
     assert.equal(opened, 0, "a disposed replacement must not reopen later");
@@ -402,4 +437,27 @@ test("self-update discards malformed or expired markers without polling inventor
         value: previous,
       });
   }
+});
+
+test("self-update replaces Loader's cached active plugin only when the target is registered", () => {
+  const loader = loaderPanelFixture("0.2.2");
+  const stale = loader.deckyState.activePlugin;
+  assert.notEqual(stale, loader.plugins[0]);
+  assert.equal(selfUpdatePanel("0.2.1", loader), null);
+  const panel = selfUpdatePanel("0.2.2", loader)!;
+  assert.equal(panel.close(), true);
+  assert.equal(
+    loader.deckyState.activePlugin,
+    null,
+    "clear old content before selecting the new instance",
+  );
+  assert.equal(panel.select(), true);
+  assert.equal(loader.deckyState.activePlugin, loader.plugins[0]);
+  assert.notEqual(loader.deckyState.activePlugin?.content, stale?.content);
+  loader.plugins[0] = { ...loader.plugins[0], version: "0.2.3" };
+  assert.equal(
+    panel.select(),
+    false,
+    "do not select a different release if Loader changes during the handoff",
+  );
 });

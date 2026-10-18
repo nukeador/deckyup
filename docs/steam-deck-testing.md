@@ -192,3 +192,8 @@ Publication makes this path available; the real native completion and panel repl
 - Unloading during inventory verification must preserve the marker for the replacement; unloading after closing QAM must cancel the delayed reopen.
 - The fixture builder now rebuilds each frontend against its fixture manifest version, then restores both project manifests and the normal frontend build.
 - The first transition from an older unpatched frontend still runs that frontend's existing handler. If it reopens a stale view during this transition, close and reopen QAM manually; subsequent transitions must be tested from the corrected build. Do not restart Decky or write into installed plugin directories.
+
+
+### Confirmed stale-panel cause
+
+Hardware inspection found installed files and Loader’s registered plugin at 0.2.2 while Loader’s active plugin object still referenced 0.2.1. Clearing the active selection and selecting the registered replacement through Loader’s methods changed the visible screen from the pending update to “Todo actualizado”, without reinstalling or restarting Decky. This directly validates the selection repair; the complete native 0.2.1 → 0.2.2 installation sequence still needs a run with both corrected packages.
