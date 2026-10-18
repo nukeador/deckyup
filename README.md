@@ -49,7 +49,7 @@ Search can include projects that are not Decky plugins. Compatibility is checked
   <img src="docs/images/plugin-details.png" width="300" alt="Plugin details with installed and latest versions and the Update button" />
 </p>
 
-[Latest release](https://github.com/nukeador/deckyup/releases/latest) · [Testing and troubleshooting](docs/steam-deck-testing.md) · [Development](docs/development.md)
+[Latest release](https://github.com/nukeador/deckyup/releases/latest) · [Testing and troubleshooting](docs/steam-deck-testing.md) · [Documentation](docs/README.md)
 
 Independent community project, not affiliated with Decky Loader. [GNU AGPL v3 license](LICENSE).
 

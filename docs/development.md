@@ -17,13 +17,13 @@ Decky Direct Updater finds new plugins and checks the public GitHub releases of 
 
 ## How it works
 
-Local installed metadata → confirmed GitHub repository → stable release and matching ZIP → local download → identity, version, integrity and path validation → Decky installation request → native confirmation.
+Local installed metadata → confirmed GitHub repository → stable release and matching ZIP → local download → identity, version, integrity and path validation → contextual security review when required → Decky installation request → native confirmation.
 
 Release checks read GitHub’s public release pages using its stable-release filter and official asset links, rather than spending the unauthenticated REST core quota. Source search alone uses the repository search API; candidate manifests come from raw.githubusercontent.com. The Python backend performs blocking work in worker threads. The React QAM panel uses standard Decky controls. A small frontend adapter isolates the internal Loader installer route; the current public `@decky/api` has no installed-plugin inventory or installer API. Inventory comes from the parent of Decky's runtime `DECKY_PLUGIN_DIR`, without modifying installed files or requesting root.
 
 ## Installation
 
-The first milestone is local hardware testing. Build an installable ZIP using the instructions below, transfer it to the Deck, and choose **Install Plugin from ZIP** in Decky Settings with Developer Mode enabled. See the [Steam Deck testing guide](steam-deck-testing.md) for exact steps, controlled fixture upgrades, cancellation, logs, and recovery. No GitHub release is needed.
+For a development build, create an installable ZIP using the instructions below, transfer it to the Deck, and choose **Install Plugin from ZIP** in Decky Settings with Developer Mode enabled. See the [Steam Deck testing guide](steam-deck-testing.md) for exact steps, controlled fixture upgrades, cancellation, logs, and recovery. No GitHub release is needed.
 
 ## Updating plugins
 
@@ -83,7 +83,13 @@ bash scripts/build-local.sh
 
 Produces `dist-release/Decky-Direct-Updater.zip` with the real compiled frontend and Python backend. Packaging uses an explicit allowlist and deterministic ZIP entries; no publishing occurs. Tests, settings, fixtures, source control and caches are excluded.
 
-After building, `pnpm fixtures` creates two **local-test-only** packages and a fake release response in `dist-release/local-fixture/`. Only those special packages contain the fixed local fixture reader. The production package cannot activate it through settings, environment variables or RPC. Follow the hardware guide before using them.
+`pnpm fixtures` rebuilds the frontend for each fixture version and creates two **local-test-only** packages and a fake release response in `dist-release/local-fixture/`. It restores the project manifests and normal frontend build afterward. Only those special packages contain the fixed local fixture reader. The production package cannot activate it through settings, environment variables or RPC. Follow the hardware guide before using them.
+
+## Self-update handoff
+
+The build embeds its frontend version. Each plugin instance has a separate identifier. A self-update records the target version and requesting instance in session storage before opening Decky’s native confirmation. The requesting instance cannot consume this marker, even after the installed files change. A replacement frontend must match the target version, refresh its update data and confirm the installed version before closing and reopening Quick Access. Disposal or a changed marker during verification prevents a stale callback from completing the handoff. Malformed or expired markers are discarded.
+
+This handoff is a UI refresh, not proof inferred from accepting a confirmation. The native installer and actual installed inventory remain authoritative. See the [published-release test](steam-deck-testing.md#published-self-update-test-021--022) and [security policy](security-review.md).
 
 ## Releases
 
@@ -99,7 +105,6 @@ Integration was checked against the [official template](https://github.com/Steam
 
 GNU Affero General Public License v3.0 only (AGPL-3.0-only). See [LICENSE](../LICENSE). The private HTML parser is vendored from CPython 3.11.14 because Decky does not bundle `html.parser`; its Python license is included in `direct_updater/_html/LICENSE`.
 
-
 ## Choose another version and background indicator
 
 Open a plugin's details and choose **Install another version** to load releases from its confirmed repository. **Load more** retrieves the next page only when requested. Stable releases and prereleases are shown together; the installed version, non-SemVer tags, missing plugin ZIPs and ambiguous assets cannot be installed. Comparisons, pagination and asset resolution run in Python. A manual selection never changes an update channel or pins a version.
@@ -108,7 +113,7 @@ An older version first shows the installed and selected versions and requires **
 
 The green dot at the upper right of Direct Updater's icon in Decky's plugin list means at least one newer stable version has been confirmed. The plugin checks at load and every four hours, sharing one in-flight check and the existing backend cache with the panel. The timer and progress subscription exist even while the panel is closed, and are disposed on unload. Opening the panel or requesting installation does not clear the dot. A valid recheck reads installed versions and clears resolved updates; a failed lookup does not create an update or erase a previous positive for the same installation/source.
 
-## Find Plugins — local 0.1.3 build
+## Find Plugins
 
 Search opens from the small icon immediately before Refresh. The same native keyboard field accepts a name, owner/repo or HTTPS GitHub repository URL. Search runs only on submit. Five compact rows appear first; Show more reveals another five from memory. Repository details and installation stay inside the sidebar. Native focus groups and Back preserve the main tab, result selection and scroll while navigating.
 

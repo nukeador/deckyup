@@ -351,3 +351,55 @@ test("self-update ignores the old frontend even after files change, and preserve
       });
   }
 });
+
+test("self-update discards malformed or expired markers without polling inventory", async () => {
+  const previous = globalThis.window;
+  let raw: string | null = null;
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: {
+      sessionStorage: {
+        getItem: () => raw,
+        removeItem: () => {
+          raw = null;
+        },
+      },
+    },
+  });
+  try {
+    const now = Date.now();
+    for (const marker of [
+      "invalid JSON",
+      "null",
+      "[]",
+      "42",
+      JSON.stringify({ version: "0.2.2" }),
+      JSON.stringify({ version: "", created: now }),
+      JSON.stringify({ version: "0.2.2", created: now, requester: 12 }),
+      '{"version":"0.2.2","created":1e400}',
+      JSON.stringify({ version: "0.2.2", created: now - 31 * 60 * 1000 }),
+      JSON.stringify({ version: "0.2.2", created: now + 60_000 }),
+    ]) {
+      raw = marker;
+      await reopenAfterSelfUpdate(
+        async () => {
+          assert.fail("invalid marker must not poll inventory");
+        },
+        {
+          CloseSideMenus: () => assert.fail("must not close QAM"),
+          OpenQuickAccessMenu: () => assert.fail("must not open QAM"),
+        },
+        { version: "0.2.2", instance: "replacement" },
+      );
+      assert.equal(raw, null, marker);
+    }
+  } finally {
+    if (previous === undefined)
+      delete (globalThis as { window?: Window }).window;
+    else
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previous,
+      });
+  }
+});

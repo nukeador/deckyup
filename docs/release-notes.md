@@ -1,1 +1,3 @@
-- Fix self-update reopening the previous panel: only a replacement frontend matching the installed target version can reopen Quick Access. Refresh the replacement instance’s update state before reopening, and preserve the pending handoff if a frontend unloads during verification.
+- Discard malformed self-update session data, including null values, invalid request identifiers and non-finite timestamps, instead of throwing from background checks.
+- Simplify the shared navigation type used by the self-update handoff.
+- Organize the documentation with a central index, updated development guidance and a step-by-step 0.2.1 → 0.2.2 self-update test using the published releases.

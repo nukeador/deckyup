@@ -59,6 +59,11 @@ export function requestUninstallConfirmation(
 const SELF_NAME = "Decky Direct Updater";
 const SELF_REOPEN_KEY = "decky-direct-updater:self-reopen";
 const REOPEN_EXPIRY = 30 * 60 * 1000;
+interface SelfUpdateNavigation {
+  CloseSideMenus(): void;
+  OpenQuickAccessMenu(tab: number): void;
+}
+
 export interface SelfUpdateFrontend {
   version: string;
   instance: string;
@@ -105,17 +110,14 @@ export async function requestSelfUpdate(
 
 export async function reopenAfterSelfUpdate(
   installed: () => Promise<{ name: string; version?: string }[]>,
-  navigation: {
-    CloseSideMenus(): void;
-    OpenQuickAccessMenu(tab: number): void;
-  },
+  navigation: SelfUpdateNavigation,
   frontend = moduleFrontend,
   isActive: () => boolean = () => true,
 ): Promise<void> {
   const storage = session();
   const raw = storage?.getItem(SELF_REOPEN_KEY);
   if (!raw || !storage) return;
-  let pending: { version: string; created: number; requester?: string };
+  let pending: { version: string; created: number; requester?: string } | null;
   try {
     pending = JSON.parse(raw);
   } catch {
@@ -123,8 +125,13 @@ export async function reopenAfterSelfUpdate(
     return;
   }
   if (
+    !pending ||
     typeof pending.version !== "string" ||
+    !pending.version ||
     typeof pending.created !== "number" ||
+    !Number.isFinite(pending.created) ||
+    (pending.requester !== undefined &&
+      typeof pending.requester !== "string") ||
     Date.now() - pending.created > REOPEN_EXPIRY ||
     Date.now() < pending.created
   ) {
@@ -162,10 +169,7 @@ export async function reopenAfterSelfUpdate(
 /** Keep checking until Loader reports the replacement version or this mount ends. */
 export function watchSelfUpdate(
   installed: () => Promise<{ name: string; version?: string }[]>,
-  navigation: {
-    CloseSideMenus(): void;
-    OpenQuickAccessMenu(tab: number): void;
-  },
+  navigation: SelfUpdateNavigation,
   frontend = moduleFrontend,
 ): () => void {
   let active = true;

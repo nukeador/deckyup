@@ -108,7 +108,6 @@ Open long details in the short QAM viewport and scroll through every action. Foc
 
 Prepare an LSFG update and cancel the native installer confirmation first. A differing ZIP root must be normalized to the installed folder after identity/version/checksum validation. The package.json bytes, including remote_binary declarations, must be preserved for Decky to handle normally. Only accept the upgrade when ready to test it; preparation alone must not change installed files.
 
-
 ## Manual releases and downgrade confirmation
 
 Local tests cover stable and prerelease SemVer (`dev`, `beta`, `rc`), non-comparable tags, missing and ambiguous ZIPs, both GitHub pagination formats, opaque frontend cursors, stale installed versions, changed sources, forged identifiers, manipulated release metadata, ZIP identity/version mismatches and confirmed downgrade staging. The same pipeline is tested using Direct Updater's own plugin identity. The UI store tests cover initial/four-hour checks without the panel, single-flight requests, progress, preserved positive results after errors, canonical source redirects and disposal.
@@ -124,7 +123,6 @@ On the physical Deck (pending validation of the newly added UI):
 7. Leave the panel closed for four hours (or use a development-only shortened timer outside the production package) and verify the next check runs once. Opening/refreshing during a check must reuse it. Unload/reload and ensure old timers/listeners no longer issue checks or update the UI.
 
 Browser validation uses simulated Decky controls and a native-installer stub. It can verify key activation/Escape, focus restoration, loading/error states, paging, warning cancellation, shared badge state and request arguments. Steam's directional focus behavior and actual Loader prompts require the physical checks above.
-
 
 ## Plug-and-play discovery
 
@@ -143,7 +141,7 @@ A read-only SSH smoke test with isolated temporary settings exercised actual ins
 
 README screenshots were captured from the running Direct Updater panel on a Steam Deck through its local CEF debugger, cropped to the plugin panel and visually checked to exclude account names, avatars, notifications and other desktop content. They show pending updates and plugin details; no installation was started to obtain them.
 
-## Find Plugins — local 0.1.3 acceptance pass (pending hardware)
+## Find Plugins acceptance checks
 
 Install the local ZIP from Downloads yourself, through Decky's Developer settings. This build has not been published to GitHub.
 
@@ -160,7 +158,7 @@ Install the local ZIP from Downloads yourself, through Decky's Developer setting
 
 Pending physical checks: directional focus including keyboard dismissal, touch, scroll/focus retention in QAM, native INSTALL/UPDATE prompts and cancellation, successful new plugin installation/source tracking, and self-update reload. Browser mocks do not certify these. Technical logs use existing debug logging categories (search/repository/release metadata, cache hits and rate limits), with no secrets or telemetry.
 
-## Quick update actions — local 0.1.5
+## Quick update actions
 
 In both Updates and All, activate the plugin name to open details, or move Right to its download icon and press A to prepare the update directly. The icon shows a spinner while preparing; repeated presses must not prepare another ZIP. Decky still asks for confirmation. Cancel must not report success or clear the update indicator. Check touch targets, Left/Right focus, long names, scroll retention and errors from the list. Non-update status icons remain part of the Details action. These physical checks remain pending.
 
@@ -176,6 +174,16 @@ Local tests emulate Decky gamepad events in a DOM; they cannot certify Steam's a
 - With a review open, change the disposable installed manifest or staged ZIP. Continuing must stop with a localized error and require fresh preparation. Do not modify installed production plugins for this check.
 - After a genuine completed self-update, the old panel should close and Decky's updated panel reopen. Neither cancelling the review nor cancelling Decky's prompt should count as a completed installation.
 
+## Published self-update test: 0.2.1 → 0.2.2
+
+1. Download the ZIP specifically from [v0.2.1](https://github.com/nukeador/deckyup/releases/tag/v0.2.1) and install it through Decky’s native ZIP option. Do not use the latest-release URL to establish this starting version.
+2. Close and reopen Quick Access once after this initial installation. Confirm the installed version is **0.2.1**, then refresh Direct Updater to detect **0.2.2**.
+3. Select Update for Direct Updater. First cancel Decky’s native confirmation: the installed version must remain 0.2.1 and no completed-update reopen should occur.
+4. Request the update again and accept Decky’s native confirmation. Once Loader replaces the frontend, Quick Access should close and reopen with the normal plugin view. The previous download/preparation screen must not return.
+5. Check Direct Updater in **All**: installed version **0.2.2**, with no update offered for Direct Updater. Other plugins can still have updates. Confirm saved source choices remain intact.
+6. If the panel remains stale, record the visible installed version and exact screen before closing it, and collect the plugin/Loader logs from [Logs and recovery](#logs-and-recovery). Do not edit installed plugin files or restart services to force a passing result.
+
+Publication makes this path available; the real native completion and panel replacement still require physical Steam Deck validation.
 
 ## Self-update frontend handoff regression
 
