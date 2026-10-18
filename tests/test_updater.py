@@ -169,6 +169,24 @@ class Installed(Workspace):
         ):
             self.assertFalse(installed_plugins(self.root / "plugins")[0]["valid_identity"])
 
+    def test_ordinary_folders_are_not_plugins_but_broken_manifests_remain_visible(self):
+        folder = self.install()
+        for name in ("assets", "bin", "desktop"):
+            (folder.parent / name).mkdir()
+        # package.json alone may belong to a dependency, not a Decky plugin.
+        (folder.parent / "assets" / "package.json").write_text('{"name":"assets"}')
+        broken = folder.parent / "broken"
+        broken.mkdir()
+        (broken / "plugin.json").write_text("{invalid")
+        items = {item["id"]: item for item in installed_plugins(folder.parent)}
+        self.assertEqual(set(items), {"updater", "broken"})
+        self.assertFalse(items["broken"]["valid_identity"])
+        self.assertTrue(items["broken"]["metadata_error"])
+
+    def test_folder_names_are_not_a_plugin_blacklist(self):
+        self.install(folder="assets", name="Real Plugin")
+        self.assertEqual(installed_plugins(self.root / "plugins")[0]["name"], "Real Plugin")
+
     def test_symlink_directory_ignored(self):
         self.install()
         (self.root / "plugins" / "link").symlink_to(self.root, target_is_directory=True)

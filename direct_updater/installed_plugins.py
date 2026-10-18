@@ -109,6 +109,14 @@ def installed_plugins(root):
     for folder in sorted(Path(root).iterdir()):
         if folder.is_symlink() or not folder.is_dir():
             continue
+        # A Decky manifest distinguishes plugins from ordinary neighbouring folders.
+        # Keep malformed/unreadable manifests visible rather than hiding broken plugins.
+        try:
+            (folder / "plugin.json").lstat()
+        except FileNotFoundError:
+            continue
+        except OSError:
+            pass
         errors = []
         metadata = []
         for name in ("plugin.json", "package.json"):

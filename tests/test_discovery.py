@@ -239,7 +239,10 @@ class Discovery(Workspace):
         app.github.releases.assert_not_called()
         (folder / "plugin.json").unlink()
         self.metadata(folder, repository=REPO)
+        self.assertEqual(app.list_plugins(), [])
+        (folder / "plugin.json").write_text("{invalid")
         self.assertIsNone(app.list_plugins()[0]["source"])
+        app.github.releases.assert_not_called()
 
     def test_no_reverification_for_unchanged_plugins_but_changed_metadata_retries(self):
         folder = self.install(repo="owner/unmatched-project")

@@ -260,3 +260,19 @@ focus without activating anything. Navigate down to the checkbox and actions,
 then back up with the controller. The entire review uses one scrolling surface,
 with no fixed action footer or reserved lower area. Verify the panel uses the
 available QAM height, including when Steam renders it in a separate document.
+
+### CSS Loader themes and inventory filtering
+
+The panel uses a local dark palette with paired foreground/background colors;
+Steam theme color variables do not define its palette. Scoped color overrides cover
+text, actions, disabled buttons, inputs and controller focus. Loader's native
+confirmation remains outside this styling. A browser check with simulated light
+QAM styles (including global important text/button rules) retained readable text,
+muted labels and focused controls without changing content outside the plugin.
+Still verify real CSS Loader themes on hardware, including checkbox states, all
+review screens and Find Plugins. More specific theme overrides can still conflict.
+
+Only folders with a plugin.json entry enter the inventory. Ordinary neighbouring
+assets/bin/desktop folders are ignored; names are not blacklisted, and malformed
+or unreadable Decky manifests remain visible with installation disabled. Verify
+this with existing plugin folders without modifying the installed files.

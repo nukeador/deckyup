@@ -1,5 +1,2 @@
-- Read release notes before downloading an update or choosing another version.
-- Expand or collapse longer notes with a compact arrow that works with a controller.
-- Review downgrade warnings alongside the selected version’s notes.
-- Fix security warnings opening halfway down the page and improve panel sizing.
-- Translate the new interface into all ten supported languages.
+- Improve text, background and button contrast when using custom CSS Loader themes.
+- Stop showing ordinary folders as unknown plugins while keeping plugins with damaged manifests visible.
