@@ -1,4 +1,5 @@
 export interface InstalledPlugin {
+  release_notes?: import("./ReleaseReview").ReleaseNotes;
   valid_identity?: boolean;
   security?: import("./securityInstaller").SecurityFacts | null;
   id: string;

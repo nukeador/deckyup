@@ -1,4 +1,5 @@
-- Add a compact, expandable capability overview based on the validated plugin ZIP and installed files, with detected folders, commands, devices, domains and GitHub projects. Analysis is informational and does not restrict access.
-- Require review for executable downloads moving to another GitHub project, newly insecure HTTP code downloads, and newly identified administrator-command execution without a root declaration. Preserve existing root acknowledgment and Decky’s native confirmation; unchanged routine updates do not repeat warnings.
-- Simplify security details and installation review, remove duplicate summaries, and localize the new interface in all ten supported languages.
-- Improve domain detection for HTTP sessions, Request objects, Decky fetch calls and larger JavaScript bundles. Exclude shell help text, syntax and pseudo-devices such as /dev/null from misleading capability lists.
+- Read release notes before downloading an update or choosing another version.
+- Expand or collapse longer notes with a compact arrow that works with a controller.
+- Review downgrade warnings alongside the selected version’s notes.
+- Fix security warnings opening halfway down the page and improve panel sizing.
+- Translate the new interface into all ten supported languages.

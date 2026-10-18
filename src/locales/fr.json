@@ -207,5 +207,10 @@
   "I understand these code downloads are not protected by HTTPS.": "Je comprends que ces téléchargements de code ne sont pas protégés par HTTPS.",
   "This version tries to run commands with administrator privileges.": "Cette version tente d’exécuter des commandes avec des droits administrateur.",
   "Executable code is downloaded over HTTP. It could be changed in transit.": "Du code exécutable est téléchargé par HTTP. Il pourrait être modifié pendant le transfert.",
-  "An executable download now comes from a different project.": "Un exécutable est désormais téléchargé depuis un autre projet."
+  "An executable download now comes from a different project.": "Un exécutable est désormais téléchargé depuis un autre projet.",
+  "What's new": "Nouveautés",
+  "Show less": "Afficher moins",
+  "No release notes provided": "Aucune note de version disponible",
+  "More release notes available on GitHub": "Autres notes de version sur GitHub",
+  "Continue with downgrade": "Continuer avec la version antérieure"
 }

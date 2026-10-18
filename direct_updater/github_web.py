@@ -5,6 +5,7 @@ import logging
 import math
 import re
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -42,9 +43,47 @@ class MetadataRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+# Notes are optional, inert text and share the release page's cache and bounds.
+MAX_NOTES = 12000
+MAX_NOTE_LINES = 100
+MAX_NOTE_LINE = 600
+
+
+class ReleaseNotes:
+    def __init__(self):
+        self.parts = []
+        self.size = 0
+        self.truncated = False
+
+    def add(self, text):
+        remaining = MAX_NOTES - self.size
+        if len(text) > remaining:
+            self.truncated = True
+        if remaining > 0:
+            self.parts.append(text[:remaining])
+            self.size += min(len(text), remaining)
+
+    def result(self):
+        text = "".join(self.parts)
+        text = "".join(
+            c for c in text if c in "\n\t" or not unicodedata.category(c).startswith("C")
+        )
+        lines = []
+        for line in text.splitlines():
+            line = " ".join(line.split())
+            if not line:
+                continue
+            if len(line) > MAX_NOTE_LINE or len(lines) >= MAX_NOTE_LINES:
+                self.truncated = True
+            if len(lines) < MAX_NOTE_LINES:
+                lines.append(line[:MAX_NOTE_LINE])
+        return {"notes": "\n".join(lines), "notes_truncated": self.truncated}
+
+
 class ReleasePage(HTMLParser):
     def __init__(self, repo):
         super().__init__()
+        self.repo = repo
         self.prefix = f"https://github.com/{repo}/releases/expanded_assets/"
         self.filtered = False
         self.tags = []
@@ -55,9 +94,35 @@ class ReleasePage(HTMLParser):
         self.prereleases = set()
         self.drafts = set()
         self.next_after = None
+        self.notes = {}
+        self.note_stack = []
+        self.note_section = None
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if tag == "section" and attrs.get("data-release-anchor", "").startswith("release-"):
+            self.note_stack = []
+            self.note_section = None
+        # A broken note container must not hide the verified asset fragment.
+        if tag == "include-fragment" and self.section:
+            expected = self.prefix + urllib.parse.quote(self.section, safe="")
+            if attrs.get("src") == expected:
+                self.note_stack = []
+                self.note_section = None
+        if self.note_stack:
+            if tag in {"script", "style", "iframe", "svg", "table", "video", "audio"}:
+                self.note_stack.append((tag, True))
+            elif tag not in {"img", "br", "hr", "input", "source", "wbr", "meta", "link"}:
+                self.note_stack.append((tag, self.note_stack[-1][1]))
+            if not self.note_stack[-1][1]:
+                if tag in {"p", "div", "li", "h1", "h2", "h3", "h4", "pre", "br"}:
+                    self.notes[self.note_section].add("\n" + ("• " if tag == "li" else ""))
+            return
+        elif self.section and "markdown-body" in attrs.get("class", "").split():
+            self.note_section = self.section
+            self.notes.setdefault(self.section, ReleaseNotes())
+            self.note_stack = [(tag, False)]
+            return
         if tag == "a" and (
             attrs.get("rel") == "next" or "next_page" in attrs.get("class", "").split()
         ):
@@ -92,12 +157,43 @@ class ReleasePage(HTMLParser):
                     self.tags.append(name)
 
     def handle_endtag(self, tag):
+        if self.note_stack:
+            matches = [i for i, item in enumerate(self.note_stack) if item[0] == tag]
+            if matches:
+                if not self.note_stack[-1][1] and tag in {
+                    "p",
+                    "div",
+                    "li",
+                    "pre",
+                    "h1",
+                    "h2",
+                    "h3",
+                    "h4",
+                }:
+                    self.notes[self.note_section].add("\n")
+                self.note_stack = self.note_stack[: matches[-1]]
+                return
+            if tag != "section":
+                return
         if tag == "section":
+            self.note_stack = []
+            self.note_section = None
             self.section = None
         if tag == "span":
             self.label = False
 
+    def release_notes(self, tag):
+        notes = self.notes.get(tag)
+        return {
+            **(notes.result() if notes else {"notes": "", "notes_truncated": False}),
+            "release_url": f"https://github.com/{self.repo}/releases/tag/{urllib.parse.quote(tag, safe='')}",
+        }
+
     def handle_data(self, data):
+        if self.note_stack and not self.note_stack[-1][1]:
+            self.notes[self.note_section].add(data)
+        if self.note_stack:
+            return
         if (
             self.label
             and self.section
@@ -258,7 +354,7 @@ class PublicGitHub:
             )
             for plugin in plugins or []
         )
-        cache_key = "_parsed_releases_v3:" + repo.lower() + ":" + json.dumps(signature)
+        cache_key = "_parsed_releases_v4:" + repo.lower() + ":" + json.dumps(signature)
         cached = self.state.get("cache", cache_key)
         if cached and time.time() - cached["time"] < (60 if refresh else TTL):
             return cached["data"]
@@ -295,6 +391,7 @@ class PublicGitHub:
                     "prerelease": False,
                     "assets": assets.assets,
                     "repository": repo,
+                    **page.release_notes(tag),
                 }
             )
             if plugins and all(compatible_releases(plugin, result)[0] for plugin in plugins):
@@ -341,6 +438,7 @@ class PublicGitHub:
                     "prerelease": tag in page.prereleases,
                     "assets": [],
                     "repository": repo,
+                    **page.release_notes(tag),
                 }
             assets = AssetPage(repo, tag)
             encoded = urllib.parse.quote(tag, safe="")
@@ -355,6 +453,7 @@ class PublicGitHub:
                 "prerelease": tag in page.prereleases or bool(Version(tag).pre),
                 "assets": assets.assets,
                 "repository": repo,
+                **page.release_notes(tag),
             }
 
         with ThreadPoolExecutor(max_workers=3) as pool:

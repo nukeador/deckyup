@@ -33,7 +33,7 @@
   "Searching GitHub…": "正在搜索 GitHub…",
   "No repositories found.": "未找到仓库。",
   "Checking compatibility…": "正在检查兼容性…",
-  "Show more": "显示更多",
+  "Show more": "展开",
   "View on GitHub": "在 GitHub 查看",
   "Check installation": "检查安装",
   "I cancelled in Decky": "我已在 Decky 中取消",
@@ -207,5 +207,10 @@
   "I understand these code downloads are not protected by HTTPS.": "我理解这些代码下载未受 HTTPS 保护。",
   "This version tries to run commands with administrator privileges.": "此版本尝试以管理员权限运行命令。",
   "Executable code is downloaded over HTTP. It could be changed in transit.": "通过 HTTP 下载可执行代码。传输过程中可能被篡改。",
-  "An executable download now comes from a different project.": "某个可执行文件现在从另一个项目下载。"
+  "An executable download now comes from a different project.": "某个可执行文件现在从另一个项目下载。",
+  "What's new": "更新内容",
+  "Show less": "收起",
+  "No release notes provided": "未提供发行说明",
+  "More release notes available on GitHub": "更多发行说明请查看 GitHub",
+  "Continue with downgrade": "继续降级"
 }

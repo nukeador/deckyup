@@ -167,10 +167,22 @@ class Web(unittest.TestCase):
         self.state.put("cache", "_rate_core", {"until": time.time() + 3600})
         github = GitHub(self.state)
         github.get = Mock(side_effect=AssertionError("REST must not be used"))
-        with patch.object(PublicGitHub, "text", side_effect=[page(), assets()]) as read:
+        with patch.object(
+            PublicGitHub,
+            "text",
+            side_effect=[
+                page().replace(
+                    "<include-fragment",
+                    '<div class="markdown-body"><p>Fixed audio</p></div><include-fragment',
+                ),
+                assets(),
+            ],
+        ) as read:
             releases = github.releases(REPO)
         self.assertEqual(releases[0]["tag_name"], "v1.2.3")
         self.assertTrue(all("api.github.com" not in call.args[0] for call in read.call_args_list))
+        self.assertEqual(releases[0]["notes"], "Fixed audio")
+        self.assertEqual(len(read.call_args_list), 2)
         github.get.assert_not_called()
 
     def test_helix_exact_display_name_allows_different_package_name(self):

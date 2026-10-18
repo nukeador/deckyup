@@ -15,6 +15,9 @@ def release_option(plugin, release):
         "installable": False,
         "asset_id": None,
         "reason": None,
+        "release_notes": {
+            key: release.get(key) for key in ("notes", "notes_truncated", "release_url")
+        },
     }
     try:
         selected = Version(release["tag_name"])

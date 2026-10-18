@@ -7,7 +7,10 @@ export function usePanelHeight(root: RefObject<HTMLDivElement | null>) {
     let viewport = element.parentElement;
     while (
       viewport &&
-      !["auto", "scroll"].includes(getComputedStyle(viewport).overflowY)
+      !["auto", "scroll"].includes(
+        element.ownerDocument.defaultView?.getComputedStyle(viewport)
+          .overflowY || "",
+      )
     ) {
       viewport = viewport.parentElement;
     }

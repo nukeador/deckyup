@@ -148,3 +148,21 @@ Validation: `python3 -m unittest discover -s tests -q` (120 tests), `pnpm test` 
 ## Website
 
 The static installation website, verified release ZIP build, Pages workflow and publishing checklist are documented in [Website and permanent installer](website.md). Website-only changes never create plugin releases.
+
+### Release notes review
+
+Release discovery extracts bounded plain text from each `data-release-anchor` section's
+`markdown-body` in the existing public GitHub releases page. Notes share the metadata
+cache; normal changelog display requires no extra REST API request or per-release
+page fetch. Remote HTML is never rendered directly. Missing or malformed notes do
+not block release discovery or installation; identity and asset validation still
+fail closed. Cosmetic note edits do not invalidate an otherwise unchanged selection.
+
+Update (including the list shortcut) and manual version selection open a compact
+release review before downloading. Up to three short items are shown initially;
+Show more/less reveals the remaining bounded text. The review has no external navigation button. Downgrade consent shares this screen and remains checked by the backend.
+Back restores the originating view and does not stage anything. Continue stages and
+validates the ZIP, then runs the existing exact-artifact security assessment. Only
+required access changes interrupt with acknowledgment; Decky's native installer
+confirmation remains the final installation decision. Installed permissions are not
+presented as candidate permissions before staging.

@@ -33,7 +33,7 @@
   "Searching GitHub…": "Поиск на GitHub…",
   "No repositories found.": "Репозитории не найдены.",
   "Checking compatibility…": "Проверка совместимости…",
-  "Show more": "Показать ещё",
+  "Show more": "Показать больше",
   "View on GitHub": "Открыть на GitHub",
   "Check installation": "Проверить установку",
   "I cancelled in Decky": "Отменено в Decky",
@@ -207,5 +207,10 @@
   "I understand these code downloads are not protected by HTTPS.": "Я понимаю, что загрузка этого кода не защищена HTTPS.",
   "This version tries to run commands with administrator privileges.": "Эта версия пытается выполнять команды с правами администратора.",
   "Executable code is downloaded over HTTP. It could be changed in transit.": "Исполняемый код загружается по HTTP. Его могут изменить при передаче.",
-  "An executable download now comes from a different project.": "Исполняемый файл теперь загружается из другого проекта."
+  "An executable download now comes from a different project.": "Исполняемый файл теперь загружается из другого проекта.",
+  "What's new": "Что нового",
+  "Show less": "Свернуть",
+  "No release notes provided": "Описание выпуска отсутствует",
+  "More release notes available on GitHub": "Остальные примечания доступны на GitHub",
+  "Continue with downgrade": "Продолжить с предыдущей версией"
 }

@@ -207,5 +207,10 @@
   "I understand these code downloads are not protected by HTTPS.": "이 코드 다운로드가 HTTPS로 보호되지 않음을 이해합니다.",
   "This version tries to run commands with administrator privileges.": "이 버전은 관리자 권한으로 명령 실행을 시도합니다.",
   "Executable code is downloaded over HTTP. It could be changed in transit.": "실행 코드가 HTTP로 다운로드됩니다. 전송 중 변경될 수 있습니다.",
-  "An executable download now comes from a different project.": "실행 파일을 다른 프로젝트에서 다운로드하게 됩니다."
+  "An executable download now comes from a different project.": "실행 파일을 다른 프로젝트에서 다운로드하게 됩니다.",
+  "What's new": "변경 사항",
+  "Show less": "접기",
+  "No release notes provided": "릴리스 노트가 없습니다",
+  "More release notes available on GitHub": "나머지 릴리스 노트는 GitHub에서 확인하세요",
+  "Continue with downgrade": "이전 버전으로 계속"
 }

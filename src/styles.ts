@@ -1,5 +1,6 @@
 export const styles = `
 .ddu { display: flex; flex-direction: column; height: var(--ddu-height, calc(100vh - 128px)); min-height: 0; width: 100%; font-size: .875rem; color: var(--gpSystemLightestGrey, #dcdedf); }
+.ddu-release-review-host { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .ddu-main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .ddu * { box-sizing: border-box; }
 .ddu [hidden] { display: none !important; }
@@ -35,6 +36,8 @@ export const styles = `
 .ddu-success-empty span { color: var(--gpSystemLightGrey, #a9b1bc); font-size: .85rem; line-height: 1.5; }
 .ddu-notice { margin: 0 16px 8px; font-size: .8rem; color: var(--gpSystemLightGrey, #a9b1bc); }
 .ddu-details { flex: 1; min-height: 0; width: 100%; padding: 0 16px 32px; overflow-y: auto; }
+.ddu-notes-toggle { display: flex; align-items: center; justify-content: center; min-height: 32px; padding: 4px; cursor: pointer; border-radius: 2px; }
+.ddu-notes-toggle:focus-visible { outline: 2px solid #fff; outline-offset: -2px; background: var(--gpBackground-LightMedium, #3d4450); }
 .ddu-back { display: inline-flex; gap: 6px; align-items: center; padding: 8px 4px; margin-bottom: 8px; cursor: pointer; }
 .ddu-details h2 { font-size: 1rem; line-height: 1.4; margin: 4px 0 16px; overflow-wrap: anywhere; }
 .ddu-versions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; margin: 0 0 16px; }

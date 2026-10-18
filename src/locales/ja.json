@@ -33,7 +33,7 @@
   "Searching GitHub…": "GitHubを検索中…",
   "No repositories found.": "リポジトリが見つかりません。",
   "Checking compatibility…": "互換性を確認中…",
-  "Show more": "さらに表示",
+  "Show more": "もっと見る",
   "View on GitHub": "GitHubで見る",
   "Check installation": "インストールを確認",
   "I cancelled in Decky": "Deckyでキャンセルした",
@@ -207,5 +207,10 @@
   "I understand these code downloads are not protected by HTTPS.": "これらのコードのダウンロードがHTTPSで保護されていないことを理解しました。",
   "This version tries to run commands with administrator privileges.": "このバージョンは管理者権限でのコマンド実行を試みます。",
   "Executable code is downloaded over HTTP. It could be changed in transit.": "実行可能なコードをHTTPでダウンロードします。転送中に改変される可能性があります。",
-  "An executable download now comes from a different project.": "実行ファイルのダウンロード元が別のプロジェクトに変わります。"
+  "An executable download now comes from a different project.": "実行ファイルのダウンロード元が別のプロジェクトに変わります。",
+  "What's new": "更新内容",
+  "Show less": "表示を減らす",
+  "No release notes provided": "リリースノートはありません",
+  "More release notes available on GitHub": "続きはGitHubで確認できます",
+  "Continue with downgrade": "以前のバージョンで続行"
 }

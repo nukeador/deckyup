@@ -231,3 +231,32 @@ Network regression: detect named HTTP sessions, urllib Request objects, literal 
 Installation review now shows one directly expandable capability list, without a duplicate static summary or an extra Security Details disclosure. Keep Cancel focus, the unchecked acknowledgment and native confirmation gate unchanged. GitHub network targets retain safe owner/repository prefixes for github.com, api.github.com/repos and raw.githubusercontent.com; credentials, release filenames, query strings and fragments remain omitted. Unknown repository segments are not guessed. The final note states that no access is restricted, without repeating plugin twice.
 
 Release 0.2.4 adds review for changed GitHub executable project identities, newly introduced HTTP executable downloads (including literal download-to-shell pipelines), and newly identified direct sudo/pkexec invocations without a root declaration. Root-declared updates retain the existing escalation policy. Same-project version/hash changes and unchanged HTTP/administrator characteristics do not repeat warnings. Hardware checks: confirm all warning combinations, initial Cancel focus, unchecked acknowledgments, B cancellation, project comparisons, and native Decky confirmation across install/update/downgrade/self-update paths.
+
+### Release notes review (hardware validation pending)
+
+- With an older version installed, detect an update and press Update from both the
+  list shortcut and Plugin Details. Confirm the notes screen opens immediately and
+  no ZIP download or staging token exists until Continue.
+- Check the concise preview and Show more/Show less with A, keyboard and touch.
+  Focus should remain on the disclosure control; long lines must wrap. Repeat in
+  all ten languages and with a long changelog at 1280×800 and smaller panel heights.
+- Press B before Continue. Confirm no staging or installer call, and restoration
+  of the initiating button, selected plugin and previous scroll position.
+- Continue: verify Preparing ZIP feedback, security review only when required,
+  mandatory unchecked root acknowledgment, then Decky's native confirmation.
+  Accept and verify the actual installed version, including self-updates.
+- In Install another version, select a release, then B: verify the same catalogue,
+  selected row, pagination and scroll are retained. Select a downgrade: notes and
+  downgrade warning must share one screen; explicitly Continue with downgrade,
+  then verify package/security checks and native Decky confirmation.
+- Test missing notes and truncated notes; confirm there is no GitHub navigation button. Cancel
+  after staging at the security step and verify existing temporary ZIP cleanup.
+- Rapid A presses must not duplicate staging or bypass the security checkbox.
+
+Security review opening: with many capabilities and a short panel, verify the
+warning heading and explanation appear first (scroll starts at zero). If Cancel
+fits on screen it receives initial focus; otherwise the warning heading receives
+focus without activating anything. Navigate down to the checkbox and actions,
+then back up with the controller. The entire review uses one scrolling surface,
+with no fixed action footer or reserved lower area. Verify the panel uses the
+available QAM height, including when Steam renders it in a separate document.

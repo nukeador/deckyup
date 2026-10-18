@@ -156,6 +156,16 @@ class ManualSelection(Workspace):
                 with self.assertRaisesRegex(ValueError, message):
                     self.app.stage_release("updater", self.new["id"], 20)
 
+    @patch("direct_updater.plugin_updates.stage_download")
+    def test_cosmetic_note_edit_does_not_change_install_selection(self, stage):
+        stage.return_value = self.staged_package(version="2.0.0-rc.1")
+        self.new["notes"] = "Before"
+        self.app.list_releases("updater")
+        self.new["notes"] = "After"
+        result = self.app.stage_release("updater", self.new["id"], 20)
+        self.assertEqual(result["version"], "2.0.0-rc.1")
+        self.assertEqual(stage.call_args.args[3], "2.0.0-rc.1")
+
 
 class WebPages(Workspace):
     def test_public_pages_include_prereleases_and_opaque_nonsemver_tags(self):

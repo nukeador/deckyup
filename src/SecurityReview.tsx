@@ -17,6 +17,7 @@ import { FaExclamationTriangle, FaChevronRight } from "react-icons/fa";
 import { Capabilities } from "./Capabilities";
 import { NavigationGroup } from "./NavigationGroup";
 import { useControllerNavigation } from "./useControllerNavigation";
+import { usePanelHeight } from "./usePanelHeight";
 import { useT } from "./i18n";
 import { styles } from "./styles";
 import type {
@@ -96,6 +97,7 @@ export function SecurityReview({
   const cancel = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
+  usePanelHeight(navigationRef);
   const controllerNavigation = useControllerNavigation(navigationRef);
   const staged = review.staged;
   const assessment = staged.security!;
@@ -128,16 +130,16 @@ export function SecurityReview({
       : "I understand Decky will download additional executable files.";
   useLayoutEffect(() => {
     const button = cancel.current?.querySelector<HTMLButtonElement>("button");
-    button?.focus({ preventScroll: true });
     const panel = navigationRef.current;
-    if (
+    // Focusing an off-screen action makes Steam scroll past the warning. Keep
+    // Cancel as the initial action when it fits; otherwise start on the warning.
+    const fits =
       button &&
       panel &&
-      button.getBoundingClientRect().bottom >
-        panel.getBoundingClientRect().bottom
-    ) {
-      button.scrollIntoView({ block: "nearest" });
-    }
+      button.getBoundingClientRect().bottom <=
+        panel.getBoundingClientRect().bottom;
+    (fits ? button : heading.current)?.focus({ preventScroll: true });
+    if (panel) panel.scrollTop = 0;
   }, [token]);
   const onCancel = () => installer.cancel(token);
   return (

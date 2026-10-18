@@ -111,6 +111,9 @@ class Updater:
         return {
             "status": "update" if version > installed else "current",
             "latest": version.text,
+            "release_notes": {
+                key: release.get(key) for key in ("notes", "notes_truncated", "release_url")
+            },
             "release_id": release["id"],
             "asset_id": asset["id"],
             "source": release.get("repository", plugin.get("source")),
@@ -180,7 +183,18 @@ class Updater:
                 raise ValueError("Choose a release from this plugin's version selector")
             page = self.github.release_page(plugin["source"], selection["after"], refresh=True)
             matches = [item for item in page["releases"] if item["id"] == release_id]
-            if len(matches) != 1 or matches[0] != selection["release"]:
+
+            # Cosmetic note edits cannot change the chosen package or invalidate consent.
+            def install_metadata(release):
+                return {
+                    key: value
+                    for key, value in release.items()
+                    if key not in {"notes", "notes_truncated", "release_url"}
+                }
+
+            if len(matches) != 1 or install_metadata(matches[0]) != install_metadata(
+                selection["release"]
+            ):
                 raise ValueError("Release metadata changed; reopen the version selector")
             release = matches[0]
             option = release_option(plugin, release)

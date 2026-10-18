@@ -999,3 +999,71 @@ test("downloaded-code review uses the same acknowledgment gate before native con
   assert.equal((await result).requested, true);
   assert.equal(f.native(), 1);
 });
+
+test("a short panel opens at the warning instead of scrolling to an off-screen Cancel", async () => {
+  const dom = new JSDOM("<div id='root'></div>", { pretendToBeVisual: true });
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    HTMLElement: dom.window.HTMLElement,
+    requestAnimationFrame: dom.window.requestAnimationFrame.bind(dom.window),
+    cancelAnimationFrame: dom.window.cancelAnimationFrame.bind(dom.window),
+    IS_REACT_ACT_ENVIRONMENT: true,
+  });
+  const prototype = dom.window.HTMLElement.prototype;
+  prototype.getBoundingClientRect = function () {
+    const bottom = this.matches(".ddu-security-actions button") ? 700 : 350;
+    return {
+      top: 0,
+      bottom,
+      left: 0,
+      right: 300,
+      width: 300,
+      height: bottom,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    };
+  };
+  let jumps = 0;
+  prototype.scrollIntoView = () => {
+    jumps++;
+  };
+  const f = setup();
+  const root = createRoot(document.getElementById("root")!);
+  await act(async () =>
+    root.render(
+      createElement(SecurityReviewBoundary, {
+        installer: f.installer,
+        children: createElement("button", null, "Install"),
+      }),
+    ),
+  );
+  let result!: Promise<unknown>;
+  await act(async () => {
+    result = f.installer.request(f.selected);
+  });
+  const dialog = document.querySelector<HTMLElement>('[role="alertdialog"]')!;
+  assert.equal(document.activeElement?.id, "ddu-security-title");
+  assert.equal(dialog.scrollTop, 0);
+  assert.equal(jumps, 0);
+  assert.ok(dialog.style.getPropertyValue("--ddu-height"));
+  assert.equal(
+    document.querySelector('[role="checkbox"]')?.getAttribute("aria-checked"),
+    "false",
+  );
+  await act(async () =>
+    document.activeElement?.dispatchEvent(
+      new dom.window.Event("decky-activate", { bubbles: true }),
+    ),
+  );
+  assert.equal(f.native(), 0);
+  await act(async () =>
+    dialog.dispatchEvent(
+      new dom.window.Event("decky-cancel", { bubbles: true, cancelable: true }),
+    ),
+  );
+  await result;
+  assert.equal(f.native(), 0);
+  await act(async () => root.unmount());
+});

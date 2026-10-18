@@ -1,3 +1,4 @@
+import { ReleaseReview } from "./ReleaseReview";
 import {
   addEventListener,
   removeEventListener,
@@ -127,6 +128,48 @@ function Content({
   const loadFailed = Boolean(checkError);
   const [navigation, dispatch] = useReducer(navigate, initialNavigation);
   const [finding, setFinding] = useState(false);
+  const [releaseReview, setReleaseReview] = useState<InstalledPlugin | null>(
+    null,
+  );
+  const reviewReturn = useRef<{
+    element: HTMLElement | null;
+    container: HTMLElement | null;
+    scroll: number;
+  } | null>(null);
+  function openReleaseReview(plugin: InstalledPlugin) {
+    if (workingRef.current) return;
+    const element = rootRef.current?.ownerDocument
+      .activeElement as HTMLElement | null;
+    const container =
+      element?.closest<HTMLElement>(".ddu-details,.ddu-list") || null;
+    reviewReturn.current = {
+      element,
+      container,
+      scroll: container?.scrollTop || 0,
+    };
+    setReleaseReview(plugin);
+  }
+  function closeReleaseReview() {
+    setReleaseReview(null);
+    requestAnimationFrame(() => {
+      const saved = reviewReturn.current;
+      saved?.element?.focus({ preventScroll: true });
+      if (saved?.container) saved.container.scrollTop = saved.scroll;
+    });
+  }
+  useEffect(() => {
+    if (!releaseReview) return;
+    const current = plugins.find((plugin) => plugin.id === releaseReview.id);
+    if (
+      !current ||
+      current.source !== releaseReview.source ||
+      current.version !== releaseReview.version ||
+      current.release_id !== releaseReview.release_id ||
+      current.asset_id !== releaseReview.asset_id
+    )
+      closeReleaseReview();
+  }, [plugins, releaseReview]);
+
   const searchButton = useRef<HTMLDivElement>(null);
   const [working, setWorking] = useState<string | null>(null);
   const [rowActionId, setRowActionId] = useState<string | null>(null);
@@ -170,7 +213,7 @@ function Content({
   );
 
   useLayoutEffect(() => {
-    if (finding) return;
+    if (finding || releaseReview) return;
     if (selected) {
       backRef.current?.focus({ preventScroll: true });
       return;
@@ -192,7 +235,7 @@ function Content({
 
   useLayoutEffect(() => {
     const pending = pendingList.current;
-    if (finding) return;
+    if (finding || releaseReview) return;
     if (selected) {
       if (
         backRef.current &&
@@ -277,262 +320,281 @@ function Content({
   return (
     <NavigationGroup ref={rootRef} className="ddu" flow-children="column">
       <style>{styles}</style>
-      <NavigationGroup
-        className="ddu-main"
-        hidden={Boolean(selected) || finding}
-        flow-children="column"
-      >
-        <NavigationGroup className="ddu-toolbar" flow-children="row">
-          <NavigationGroup
-            flow-children="row"
-            className="ddu-tabs"
-            role="tablist"
-            aria-label={t("Plugin views")}
-          >
-            {(["updates", "all"] as const).map((view) => (
-              <Focusable
-                key={view}
-                role="tab"
-                tabIndex={0}
-                className="ddu-tab"
-                focusClassName="ddu-focused"
-                aria-selected={navigation.view === view}
-                aria-controls="ddu-plugin-list"
-                onActivate={() => changeView(view)}
-                onClick={() => changeView(view)}
-              >
-                <span
-                  className="ddu-tab-label"
-                  title={view === "updates" ? t("Updates") : t("All")}
-                >
-                  {view === "updates" ? t("Updates") : t("All")}
-                </span>
-                <span className="ddu-tab-count">
-                  ({view === "updates" ? updates : plugins.length})
-                </span>
-              </Focusable>
-            ))}
-          </NavigationGroup>
-          <Focusable
-            ref={searchButton}
-            role="button"
-            tabIndex={0}
-            className="ddu-icon-button"
-            focusClassName="ddu-focused"
-            aria-label={t("Find Plugins")}
-            onActivate={() => setFinding(true)}
-            onClick={() => setFinding(true)}
-            onOKActionDescription={t("Find Plugins")}
-          >
-            <FaSearch aria-hidden="true" />
-          </Focusable>
-          <Focusable
-            role="button"
-            tabIndex={0}
-            className="ddu-icon-button"
-            focusClassName="ddu-focused"
-            aria-label={
-              refreshing ? t("Checking for updates") : t("Refresh updates")
-            }
-            aria-disabled={refreshing}
-            onActivate={() => {
-              if (!refreshing) void refresh(true);
-            }}
-            onClick={() => {
-              if (!refreshing) void refresh(true);
-            }}
-            onOKActionDescription={t("Refresh")}
-          >
-            {refreshing ? (
-              <Spinner style={{ width: 18, height: 18 }} />
-            ) : (
-              <FaSyncAlt aria-hidden="true" />
-            )}
-          </Focusable>
-        </NavigationGroup>
-        {(loadFailed ||
-          plugins.some((plugin) => plugin.status === "error")) && (
-          <div role="status" className="ddu-notice">
-            {checkError || "Some checks failed. Open a plugin to retry."}
-          </div>
-        )}
-        {rowActionId && (working === rowActionId || messages[rowActionId]) && (
-          <div className="ddu-notice" role="status">
-            {plugins.find((plugin) => plugin.id === rowActionId)?.name}:{" "}
-            {working === rowActionId
-              ? t("Preparing update…")
-              : t(messages[rowActionId])}
-          </div>
-        )}
-        <NavigationGroup
-          flow-children="column"
-          id="ddu-plugin-list"
-          ref={listRef}
-          className="ddu-list"
-          aria-label={
-            navigation.view === "updates"
-              ? t("Updates and sources to review")
-              : t("Installed plugins")
-          }
-          aria-busy={refreshing}
-        >
-          {visible.map((plugin) => (
-            <PluginRow
-              key={plugin.id}
-              plugin={plugin}
-              busy={working !== null}
-              updating={working === plugin.id}
-              onUpdate={() => {
-                if (workingRef.current) return;
-                setRowActionId(plugin.id);
-                void update(plugin);
-              }}
-              registerUpdate={(element) => {
-                if (element) rows.current.set(plugin.id + ":update", element);
-                else rows.current.delete(plugin.id + ":update");
-              }}
-              onUpdateFocus={() => {
-                focusedRow.current = plugin.id + ":update";
-                dispatch({ type: "focus", id: plugin.id });
-              }}
-              register={(element) => {
-                if (element) rows.current.set(plugin.id, element);
-                else rows.current.delete(plugin.id);
-              }}
-              onFocus={() => {
-                focusedRow.current = plugin.id;
-                dispatch({ type: "focus", id: plugin.id });
-              }}
-              onOpen={() =>
-                dispatch({
-                  type: "open",
-                  id: plugin.id,
-                  scrollTop: listRef.current?.scrollTop || 0,
-                })
-              }
-            />
-          ))}
-          {!visible.length && emptyState && (
-            <div className="ddu-success-empty" role="status">
-              <div className="ddu-success-icon" aria-hidden="true">
-                <FaCheck />
-              </div>
-              <strong>{t("You're up to date")}</strong>
-            </div>
-          )}
-          {!visible.length && !emptyState && (
-            <div className="ddu-empty" role="status">
-              {t(emptyMessage(plugins, refreshing, loadFailed))}
-            </div>
-          )}
-        </NavigationGroup>
-      </NavigationGroup>
-      <FindPlugins
-        open={finding}
-        store={finder}
-        onBack={() => {
-          setFinding(false);
-          requestAnimationFrame(() =>
-            searchButton.current?.focus({ preventScroll: true }),
-          );
-        }}
-        details={repositoryDetails}
-        install={finderActions.install}
-        checkInstallation={finderActions.check}
-        cancelInstallation={finderActions.cancel}
-      />
-      {selected && !finding && (
-        <PluginDetails
-          loadSecurity={loadSecurity}
-          canUninstall={
-            selected.valid_identity === true &&
-            plugins.filter((plugin) => plugin.name === selected.name).length ===
-              1
-          }
-          plugin={selected}
-          loadReleases={releases}
-          onInstallRelease={(release, confirmed) =>
-            action(selected, async () => {
-              if (release.asset_id === null)
-                throw new Error("No compatible ZIP");
-              const response = await stageRelease(
-                selected.id,
-                release.release_id,
-                release.asset_id,
-                confirmed,
-              );
-              if (response.error || !response.update)
-                throw new Error(response.error || "Version preparation failed");
-              const result = await securityInstaller.request(response.update);
-              if (!result.requested) throw new Error(result.error);
-              if (mounted.current)
-                setMessages((previous) => ({
-                  ...previous,
-                  [selected.id]:
-                    "Confirmation requested. Accept or cancel in Decky, then refresh to read the installed version.",
-                }));
-            })
-          }
+      {releaseReview && (
+        <ReleaseReview
+          key={`${releaseReview.id}:${releaseReview.source}:${releaseReview.version}:${releaseReview.release_id}`}
+          name={releaseReview.name}
+          installed={releaseReview.version}
+          selected={releaseReview.latest || ""}
+          notes={releaseReview.release_notes}
+          source={releaseReview.source}
           busy={working !== null}
-          checking={refreshing}
-          message={messages[selected.id]}
-          candidates={candidates[selected.id] ?? selected.suggestions}
-          onBack={back}
-          backRef={(element) => {
-            backRef.current = element;
+          message={messages[releaseReview.id]}
+          onBack={closeReleaseReview}
+          onContinue={() => update(releaseReview)}
+        />
+      )}
+      <div hidden={Boolean(releaseReview)} style={{ display: "contents" }}>
+        <NavigationGroup
+          className="ddu-main"
+          hidden={Boolean(selected) || finding}
+          flow-children="column"
+        >
+          <NavigationGroup className="ddu-toolbar" flow-children="row">
+            <NavigationGroup
+              flow-children="row"
+              className="ddu-tabs"
+              role="tablist"
+              aria-label={t("Plugin views")}
+            >
+              {(["updates", "all"] as const).map((view) => (
+                <Focusable
+                  key={view}
+                  role="tab"
+                  tabIndex={0}
+                  className="ddu-tab"
+                  focusClassName="ddu-focused"
+                  aria-selected={navigation.view === view}
+                  aria-controls="ddu-plugin-list"
+                  onActivate={() => changeView(view)}
+                  onClick={() => changeView(view)}
+                >
+                  <span
+                    className="ddu-tab-label"
+                    title={view === "updates" ? t("Updates") : t("All")}
+                  >
+                    {view === "updates" ? t("Updates") : t("All")}
+                  </span>
+                  <span className="ddu-tab-count">
+                    ({view === "updates" ? updates : plugins.length})
+                  </span>
+                </Focusable>
+              ))}
+            </NavigationGroup>
+            <Focusable
+              ref={searchButton}
+              role="button"
+              tabIndex={0}
+              className="ddu-icon-button"
+              focusClassName="ddu-focused"
+              aria-label={t("Find Plugins")}
+              onActivate={() => setFinding(true)}
+              onClick={() => setFinding(true)}
+              onOKActionDescription={t("Find Plugins")}
+            >
+              <FaSearch aria-hidden="true" />
+            </Focusable>
+            <Focusable
+              role="button"
+              tabIndex={0}
+              className="ddu-icon-button"
+              focusClassName="ddu-focused"
+              aria-label={
+                refreshing ? t("Checking for updates") : t("Refresh updates")
+              }
+              aria-disabled={refreshing}
+              onActivate={() => {
+                if (!refreshing) void refresh(true);
+              }}
+              onClick={() => {
+                if (!refreshing) void refresh(true);
+              }}
+              onOKActionDescription={t("Refresh")}
+            >
+              {refreshing ? (
+                <Spinner style={{ width: 18, height: 18 }} />
+              ) : (
+                <FaSyncAlt aria-hidden="true" />
+              )}
+            </Focusable>
+          </NavigationGroup>
+          {(loadFailed ||
+            plugins.some((plugin) => plugin.status === "error")) && (
+            <div role="status" className="ddu-notice">
+              {checkError || "Some checks failed. Open a plugin to retry."}
+            </div>
+          )}
+          {rowActionId &&
+            (working === rowActionId || messages[rowActionId]) && (
+              <div className="ddu-notice" role="status">
+                {plugins.find((plugin) => plugin.id === rowActionId)?.name}:{" "}
+                {working === rowActionId
+                  ? t("Preparing update…")
+                  : t(messages[rowActionId])}
+              </div>
+            )}
+          <NavigationGroup
+            flow-children="column"
+            id="ddu-plugin-list"
+            ref={listRef}
+            className="ddu-list"
+            aria-label={
+              navigation.view === "updates"
+                ? t("Updates and sources to review")
+                : t("Installed plugins")
+            }
+            aria-busy={refreshing}
+          >
+            {visible.map((plugin) => (
+              <PluginRow
+                key={plugin.id}
+                plugin={plugin}
+                busy={working !== null}
+                updating={working === plugin.id}
+                onUpdate={() => {
+                  if (workingRef.current) return;
+                  setRowActionId(plugin.id);
+                  openReleaseReview(plugin);
+                }}
+                registerUpdate={(element) => {
+                  if (element) rows.current.set(plugin.id + ":update", element);
+                  else rows.current.delete(plugin.id + ":update");
+                }}
+                onUpdateFocus={() => {
+                  focusedRow.current = plugin.id + ":update";
+                  dispatch({ type: "focus", id: plugin.id });
+                }}
+                register={(element) => {
+                  if (element) rows.current.set(plugin.id, element);
+                  else rows.current.delete(plugin.id);
+                }}
+                onFocus={() => {
+                  focusedRow.current = plugin.id;
+                  dispatch({ type: "focus", id: plugin.id });
+                }}
+                onOpen={() =>
+                  dispatch({
+                    type: "open",
+                    id: plugin.id,
+                    scrollTop: listRef.current?.scrollTop || 0,
+                  })
+                }
+              />
+            ))}
+            {!visible.length && emptyState && (
+              <div className="ddu-success-empty" role="status">
+                <div className="ddu-success-icon" aria-hidden="true">
+                  <FaCheck />
+                </div>
+                <strong>{t("You're up to date")}</strong>
+              </div>
+            )}
+            {!visible.length && !emptyState && (
+              <div className="ddu-empty" role="status">
+                {t(emptyMessage(plugins, refreshing, loadFailed))}
+              </div>
+            )}
+          </NavigationGroup>
+        </NavigationGroup>
+        <FindPlugins
+          open={finding}
+          store={finder}
+          onBack={() => {
+            setFinding(false);
+            requestAnimationFrame(() =>
+              searchButton.current?.focus({ preventScroll: true }),
+            );
           }}
-          onRetry={() => {
-            void refresh(true);
-          }}
-          onVerify={(repository) => {
-            void action(selected, async () => {
-              const response = await verify(selected.id, repository);
-              if (response.error) throw new Error(response.error);
-              if (mounted.current)
+          details={repositoryDetails}
+          install={finderActions.install}
+          checkInstallation={finderActions.check}
+          cancelInstallation={finderActions.cancel}
+        />
+        {selected && !finding && (
+          <PluginDetails
+            loadSecurity={loadSecurity}
+            canUninstall={
+              selected.valid_identity === true &&
+              plugins.filter((plugin) => plugin.name === selected.name)
+                .length === 1
+            }
+            plugin={selected}
+            loadReleases={releases}
+            onInstallRelease={(release, confirmed) =>
+              action(selected, async () => {
+                if (release.asset_id === null)
+                  throw new Error("No compatible ZIP");
+                const response = await stageRelease(
+                  selected.id,
+                  release.release_id,
+                  release.asset_id,
+                  confirmed,
+                );
+                if (response.error || !response.update)
+                  throw new Error(
+                    response.error || "Version preparation failed",
+                  );
+                const result = await securityInstaller.request(response.update);
+                if (!result.requested) throw new Error(result.error);
+                if (mounted.current)
+                  setMessages((previous) => ({
+                    ...previous,
+                    [selected.id]:
+                      "Confirmation requested. Accept or cancel in Decky, then refresh to read the installed version.",
+                  }));
+              })
+            }
+            busy={working !== null}
+            checking={refreshing}
+            message={messages[selected.id]}
+            candidates={candidates[selected.id] ?? selected.suggestions}
+            onBack={back}
+            backRef={(element) => {
+              backRef.current = element;
+            }}
+            onRetry={() => {
+              void refresh(true);
+            }}
+            onVerify={(repository) => {
+              void action(selected, async () => {
+                const response = await verify(selected.id, repository);
+                if (response.error) throw new Error(response.error);
+                if (mounted.current)
+                  setCandidates((previous) => ({
+                    ...previous,
+                    [selected.id]: response.candidates,
+                  }));
+              });
+            }}
+            onSearch={() => {
+              void action(selected, async () => {
+                const response = await search(selected.id);
+                if (response.error) throw new Error(response.error);
+                if (!mounted.current) return;
                 setCandidates((previous) => ({
                   ...previous,
                   [selected.id]: response.candidates,
                 }));
-            });
-          }}
-          onSearch={() => {
-            void action(selected, async () => {
-              const response = await search(selected.id);
-              if (response.error) throw new Error(response.error);
-              if (!mounted.current) return;
-              setCandidates((previous) => ({
-                ...previous,
-                [selected.id]: response.candidates,
-              }));
-              if (!response.candidates.length)
-                setMessages((previous) => ({
-                  ...previous,
-                  [selected.id]: "Source not found",
-                }));
-            });
-          }}
-          onConfirm={(repository) => {
-            void action(selected, async () => {
-              const confirmation = await confirm(selected.id, repository);
-              if (!confirmation.success)
-                throw new Error(
-                  confirmation.error || "Could not confirm source",
-                );
-              await refresh(false);
-              if (mounted.current) {
-                backRef.current?.focus({ preventScroll: true });
-                setCandidates((previous) => ({
-                  ...previous,
-                  [selected.id]: [],
-                }));
-              }
-            });
-          }}
-          onUpdate={() => {
-            void update(selected);
-          }}
-        />
-      )}
+                if (!response.candidates.length)
+                  setMessages((previous) => ({
+                    ...previous,
+                    [selected.id]: "Source not found",
+                  }));
+              });
+            }}
+            onConfirm={(repository) => {
+              void action(selected, async () => {
+                const confirmation = await confirm(selected.id, repository);
+                if (!confirmation.success)
+                  throw new Error(
+                    confirmation.error || "Could not confirm source",
+                  );
+                await refresh(false);
+                if (mounted.current) {
+                  backRef.current?.focus({ preventScroll: true });
+                  setCandidates((previous) => ({
+                    ...previous,
+                    [selected.id]: [],
+                  }));
+                }
+              });
+            }}
+            onUpdate={() => {
+              openReleaseReview(selected);
+            }}
+          />
+        )}
+      </div>
     </NavigationGroup>
   );
 }
