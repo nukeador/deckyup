@@ -222,7 +222,7 @@ class Pages(unittest.TestCase):
                 self.assertIn(link[1:], doc.ids)
             elif not urlsplit(link).scheme:
                 self.assertFalse(link.startswith("/"), "Project Pages must use relative paths")
-                self.assertTrue((self.output / link).exists(), link)
+                self.assertTrue((self.output / urlsplit(link).path).exists(), link)
         for image in doc.images:
             if image.get("aria-hidden") == "true":
                 self.assertEqual(image["alt"], "")
@@ -315,7 +315,7 @@ class Pages(unittest.TestCase):
                 if link.startswith("#"):
                     self.assertIn(link[1:], document.ids)
                 elif not urlsplit(link).scheme:
-                    self.assertTrue((page.parent / link).exists(), f"{code}: {link}")
+                    self.assertTrue((page.parent / urlsplit(link).path).exists(), f"{code}: {link}")
             self.assertEqual(markup.count('rel="alternate"'), 11)
         root_markup = (self.output / "index.html").read_text()
         self.assertEqual(root_markup.count("var _paq = (window._paq = window._paq || []);"), 1)
