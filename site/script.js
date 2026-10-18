@@ -61,3 +61,17 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
 window.addEventListener("pagehide", () => {
   timers.forEach((timer) => clearTimeout(timer));
 });
+
+// YouTube may return a tiny placeholder with HTTP 200 for missing HD thumbnails.
+const videoThumbnail = document.querySelector("[data-video-thumbnail]");
+if (videoThumbnail) {
+  const fallback = () => {
+    if (videoThumbnail.src.endsWith("/hqdefault.jpg")) return;
+    videoThumbnail.src = "https://i.ytimg.com/vi/Ze1cUR-MSyg/hqdefault.jpg";
+  };
+  videoThumbnail.addEventListener("error", fallback);
+  videoThumbnail.addEventListener("load", () => {
+    if (videoThumbnail.naturalWidth < 320) fallback();
+  });
+  if (videoThumbnail.complete && videoThumbnail.naturalWidth < 320) fallback();
+}

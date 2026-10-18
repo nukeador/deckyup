@@ -44,5 +44,8 @@
   "developers_title": "プラグイン開発者にも便利",
   "developers_text": "GitHubでリリースを公開しているなら、ユーザーにDirect Updaterを案内できます。独自の更新機能を開発・保守しなくても、新しいバージョンを見つけてもらえます。",
   "find_caption": "プラグインの検索とインストール",
-  "how_install": "インストール方法 →"
+  "how_install": "インストール方法 →",
+  "video_heading": "実際の動作を見る",
+  "video_watch": "YouTube で見る",
+  "video_by": "動画制作："
 }

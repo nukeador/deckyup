@@ -230,7 +230,14 @@ class Pages(unittest.TestCase):
                 self.assertGreater(len(image["alt"]), 3)
             self.assertIn("width", image)
             self.assertIn("height", image)
-            self.assertTrue((self.output / image["src"]).is_file())
+            if urlsplit(image["src"]).scheme:
+                self.assertEqual(
+                    image["src"],
+                    "https://i.ytimg.com/vi/Ze1cUR-MSyg/maxresdefault.jpg",
+                )
+                self.assertEqual(image["loading"], "lazy")
+            else:
+                self.assertTrue((self.output / image["src"]).is_file())
 
     def test_workflow_uses_trusted_main_and_successful_release_only(self):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text()
@@ -266,6 +273,14 @@ class Pages(unittest.TestCase):
             self.assertIn(f'lang="{tag}"', markup)
             self.assertIn('data-default-entry="false"', markup)
             self.assertNotIn("{{", markup)
+            video_url = (
+                "https://www.youtube.com/watch?v=Ze1cUR-MSyg"
+                f"&hl={tag}&cc_lang_pref={tag}&cc_load_policy=1"
+            )
+            self.assertEqual(document.links.count(video_url), 2)
+            self.assertEqual(markup.count('class="video-preview"'), 1)
+            self.assertNotIn("<iframe", markup)
+            self.assertIn(html.escape(translations[code]["video_heading"]), markup)
             self.assertIn('href="../install.zip"', markup)
             self.assertIn('href="#install"', markup)
             self.assertIn('href="../favicon.svg"', markup)

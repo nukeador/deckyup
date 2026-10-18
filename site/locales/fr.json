@@ -44,5 +44,8 @@
   "developers_title": "Pour les développeurs de plugins aussi",
   "developers_text": "Vous publiez vos versions sur GitHub ? Conseillez Direct Updater à vos utilisateurs pour leur permettre de trouver les mises à jour, sans avoir à développer et maintenir votre propre système de mise à jour.",
   "find_caption": "Recherche et installation",
-  "how_install": "Comment l’installer →"
+  "how_install": "Comment l’installer →",
+  "video_heading": "Voir en action",
+  "video_watch": "Voir sur YouTube",
+  "video_by": "Vidéo de"
 }

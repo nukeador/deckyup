@@ -44,5 +44,8 @@
   "developers_title": "Built for plugin developers, too",
   "developers_text": "Publish releases on GitHub? Recommend Direct Updater so your users can find updates, without building and maintaining your own updater.",
   "find_caption": "Find & install plugins",
-  "how_install": "How to install →"
+  "how_install": "How to install →",
+  "video_heading": "See it in action",
+  "video_watch": "Watch on YouTube",
+  "video_by": "Video by"
 }
