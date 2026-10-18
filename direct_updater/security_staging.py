@@ -6,14 +6,16 @@ import time
 from pathlib import Path
 
 from .installed_plugins import installed_plugins
+from .capabilities import scan_installed, with_manifest
 from .security import ACK_REQUIRED, CHANGED_SECURITY, assess_security
 
 
 class SecurityStaging:
-    def __init__(self, plugins, staging):
+    def __init__(self, plugins, staging, state=None):
         self.plugins = Path(plugins)
         self.staging = Path(staging)
         self.pending = {}
+        self.state = state
 
     def _installed(self, root, name, package_name, updating):
         inventory = installed_plugins(self.plugins)
@@ -36,6 +38,10 @@ class SecurityStaging:
         ):
             raise ValueError(CHANGED_SECURITY)
         plugin = matches[0]
+        if plugin["security"] is not None:
+            plugin["security"]["capabilities"] = with_manifest(
+                scan_installed(self.plugins / root), plugin["security"]
+            )
         return {
             key: plugin.get(key)
             for key in (
@@ -64,6 +70,21 @@ class SecurityStaging:
             assessment = assess_security(
                 staged["security_facts"], previous["security"] if previous else None, updating
             )
+            if self.state and staged["security_facts"].get("capabilities"):
+                self.state.put(
+                    "capabilities",
+                    staged["hash"],
+                    {
+                        "identity": [
+                            staged["root"],
+                            staged["name"],
+                            staged["package_name"],
+                            staged["version"],
+                        ],
+                        "analysis": staged["security_facts"]["capabilities"],
+                    },
+                    max_entries=32,
+                )
             token = os.urandom(24).hex()
             # Internal URLs are never sent to the frontend.
             public = {
@@ -95,6 +116,34 @@ class SecurityStaging:
         except BaseException:
             path.unlink(missing_ok=True)
             raise
+
+    def preview(self, plugin, facts):
+        # Only a still-present, byte-identical staged ZIP may describe a candidate.
+        for record in reversed(list(self.pending.values())):
+            previous = record["previous"]
+            if (
+                not previous
+                or record["root"] != plugin["id"]
+                or previous["version"] != plugin["version"]
+                or previous["security"] != facts
+            ):
+                continue
+            try:
+                if record["path"].is_symlink() or not 0 <= time.time() - record["time"] <= 30 * 60:
+                    continue
+                digest = hashlib.sha256()
+                with record["path"].open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+                if digest.hexdigest() == record["staged"]["hash"]:
+                    return {
+                        "version": record["staged"]["version"],
+                        "hash": digest.hexdigest(),
+                        "assessment": record["staged"]["security"],
+                    }
+            except OSError:
+                continue
+        return None
 
     def discard(self, token):
         record = self.pending.pop(token, None) if isinstance(token, str) else None

@@ -283,6 +283,7 @@ class Finder:
                     selection["project"]["name"],
                     selection["version"],
                     self.updater.staging,
+                    capability_cache=self.updater.state,
                 )
                 path = Path(unquote(urlsplit(staged["artifact"]).path))
                 try:

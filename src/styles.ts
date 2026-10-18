@@ -75,6 +75,16 @@ export const styles = `
 .ddu-security-checkbox:focus, .ddu-security-checkbox:focus-within, .ddu-security-checkbox.gpfocus, .ddu-security-checkbox.gpfocuswithin { outline: 2px solid #fff; outline-offset: -2px; background: #3d4450; color: #fff; }
 .ddu-security-checkbox .DialogToggle_Label { color: inherit; }
 .ddu-security-checkbox svg { flex-shrink: 0; }
+.ddu-capability-explanation { padding: 0 4px 4px 28px; overflow-wrap: anywhere; }
+.ddu-capability-explanation p { margin: 4px 0 8px; }
+.ddu-capabilities-title { display: block; margin-bottom: 8px; }
+.ddu-capabilities-note { display: block; margin: 10px 0 0; line-height: 1.4; color: var(--gpSystemLightGrey, #b8bcbf); }
+.ddu-capabilities { margin: 8px 0; overflow-wrap: anywhere; }
+.ddu-capability-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; min-height: 30px; cursor: pointer; }
+.ddu-capability-row svg { width: 16px; height: 16px; flex-shrink: 0; }
+.ddu-capability-row span { flex: 1; }
+.ddu-capability-evidence { margin: 4px 0; padding-left: 24px; }
+.ddu-capability-evidence li { margin-bottom: 6px; }
 .ddu-security-details { margin: 8px 0; overflow-wrap: anywhere; }
 .ddu-security-disclosure { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 4px; cursor: pointer; border-top: 1px solid rgba(169,177,188,.2); }
 .ddu-security-disclosure svg { flex-shrink: 0; width: 10px; height: 10px; }

@@ -1,3 +1,4 @@
-- Recognize release ZIPs with packaging suffixes such as `ResonaDeck-1.2.0-Stable.zip` while preserving validated plugin identity and version checks.
-- Exclude clearly marked prerelease ZIPs from automatic stable updates.
-- Show localized compatibility errors in Find Plugins across the ten supported languages.
+- Add a compact, expandable capability overview based on the validated plugin ZIP and installed files, with detected folders, commands, devices, domains and GitHub projects. Analysis is informational and does not restrict access.
+- Require review for executable downloads moving to another GitHub project, newly insecure HTTP code downloads, and newly identified administrator-command execution without a root declaration. Preserve existing root acknowledgment and Decky’s native confirmation; unchanged routine updates do not repeat warnings.
+- Simplify security details and installation review, remove duplicate summaries, and localize the new interface in all ten supported languages.
+- Improve domain detection for HTTP sessions, Request objects, Decky fetch calls and larger JavaScript bundles. Exclude shell help text, syntax and pseudo-devices such as /dev/null from misleading capability lists.

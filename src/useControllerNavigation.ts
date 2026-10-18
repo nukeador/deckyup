@@ -16,7 +16,7 @@ export function useControllerNavigation(root: RefObject<HTMLElement | null>) {
     // That excludes keyboard Tab entry, not controller navigation.
     const controls = [
       ...scope.querySelectorAll<HTMLElement>(
-        'button,[role="button"][tabindex],[role="checkbox"],input,select,textarea',
+        'button,[role="button"][tabindex],[role="checkbox"],[data-controller-content][tabindex],input,select,textarea',
       ),
     ].filter(
       (element) =>

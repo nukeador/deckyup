@@ -22,11 +22,26 @@ class Updater:
         self.state = State(settings)
         self.github = GitHub(self.state)
         self.staging = Path(runtime) / "staged"
-        self.security = SecurityStaging(self.plugins, self.staging)
+        self.security = SecurityStaging(self.plugins, self.staging, self.state)
         self.operation = threading.RLock()
         self.discovery = SourceDiscovery(self.state, self.github)
         self.catalogues = {}
         self.finder = Finder(self)
+
+    def plugin_security(self, identifier):
+        from .capabilities import scan_installed, with_manifest
+
+        with self.operation:
+            plugin = self.plugin(identifier)
+            facts = plugin.get("security")
+            if facts is not None:
+                facts["capabilities"] = with_manifest(
+                    scan_installed(self.plugins / plugin["id"]), facts
+                )
+                candidate = self.security.preview(plugin, facts)
+                if candidate:
+                    facts["candidate"] = candidate
+            return facts
 
     def list_plugins(self):
         result = installed_plugins(self.plugins)
@@ -182,6 +197,7 @@ class Updater:
                 self.staging,
                 plugin["id"],
                 expected_package_name=plugin["package_name"],
+                capability_cache=self.state,
             )
             staged["install_type"] = "downgrade" if option["downgrade"] else "update"
             return self.security.register(staged, updating=True)
@@ -212,6 +228,7 @@ class Updater:
                 self.staging,
                 plugin["id"],
                 expected_package_name=plugin["package_name"],
+                capability_cache=self.state,
             )
             return self.security.register(staged, updating=True)
 

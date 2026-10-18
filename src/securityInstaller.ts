@@ -1,12 +1,38 @@
 import type { InstallResult, StagedUpdate } from "./deckyInstaller";
 
+export interface CapabilityAnalysis {
+  scanner_version: number;
+  evidence_hash: string;
+  complete: boolean;
+  findings: {
+    category: string;
+    description: string;
+    file: string;
+    line: number | null;
+    confidence: string;
+    origin: string;
+    targets?: string[];
+  }[];
+  limitations: string[];
+}
+export interface CapabilityChanges {
+  baseline_known: boolean;
+  added: string[];
+  status: string;
+}
 export interface SecurityFacts {
+  capabilities?: CapabilityAnalysis;
+  candidate?: { version: string; hash: string; assessment: SecurityAssessment };
+  capability_changes?: CapabilityChanges;
   root_requested: boolean;
   flags: string[];
   has_python_backend: boolean;
   external_binaries: {
     name: string;
     source_host: string;
+    source_project?: string | null;
+    source_scheme?: string;
+    source_port?: number;
     declared_hash: string | null;
   }[];
 }
@@ -16,6 +42,8 @@ export interface SecurityAssessment extends SecurityFacts {
   previous_external_binaries: SecurityFacts["external_binaries"] | null;
   added_binary_names: string[];
   changed_binary_source_hosts: string[];
+  changed_binary_projects?: string[];
+  insecure_binary_names?: string[];
   comparison_available: boolean;
   updating: boolean;
   requires_acknowledgment: boolean;

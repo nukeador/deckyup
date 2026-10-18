@@ -55,6 +55,10 @@ import {
   type View,
 } from "./uiModel";
 
+const loadSecurity = callable<
+  [string],
+  import("./securityInstaller").SecurityFacts | null
+>("plugin_security");
 const list = callable<[], InstalledPlugin[]>("list_plugins");
 const check = callable<[boolean], InstalledPlugin[]>("check_updates");
 const search = callable<
@@ -439,6 +443,7 @@ function Content({
       />
       {selected && !finding && (
         <PluginDetails
+          loadSecurity={loadSecurity}
           canUninstall={
             selected.valid_identity === true &&
             plugins.filter((plugin) => plugin.name === selected.name).length ===

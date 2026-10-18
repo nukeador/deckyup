@@ -14,6 +14,7 @@ import {
   type ReactNode,
 } from "react";
 import { FaExclamationTriangle, FaChevronRight } from "react-icons/fa";
+import { Capabilities } from "./Capabilities";
 import { NavigationGroup } from "./NavigationGroup";
 import { useControllerNavigation } from "./useControllerNavigation";
 import { useT } from "./i18n";
@@ -69,41 +70,14 @@ export function SecurityDetails({
           {!facts ? (
             <p>{t("Installed access information is unavailable.")}</p>
           ) : (
-            <ul className="ddu-security-summary">
-              <li>
-                {t(
-                  facts.root_requested
-                    ? "Administrator access requested"
-                    : "Does not request administrator access",
-                )}
-              </li>
-              <li>
-                {t(
-                  facts.has_python_backend
-                    ? "Python backend included"
-                    : "No Python backend",
-                )}
-              </li>
-              <li>
-                {t("Declared flags")}:{" "}
-                {facts.flags.length
-                  ? facts.flags.join(", ")
-                  : t("None declared")}
-              </li>
-              <li>
-                {t("Additional executables")}: {facts.external_binaries.length}
-                {facts.external_binaries.map((binary) => (
-                  <div key={binary.name} className="ddu-security-binary">
-                    <strong>{binary.name}</strong>
-                    <span>{binary.source_host}</span>
-                    <small>
-                      {t("Declared SHA-256")}:{" "}
-                      {binary.declared_hash || t("Not declared")}
-                    </small>
-                  </div>
-                ))}
-              </li>
-            </ul>
+            <>
+              <Capabilities
+                analysis={facts.capabilities}
+                changes={facts.capability_changes}
+                rootRequested={facts.root_requested}
+                externalBinaries={facts.external_binaries}
+              />
+            </>
           )}
         </div>
       )}
@@ -136,12 +110,22 @@ export function SecurityReview({
     ? "This update requests more access"
     : root
       ? "This plugin requests administrator access"
-      : assessment.updating
-        ? "This update changes executable downloads"
-        : "Review executable downloads";
+      : kinds.has("privileged_execution")
+        ? "Review administrator commands"
+        : kinds.has("privileged_execution")
+          ? "I understand this version will try to run administrator commands."
+          : kinds.has("insecure_code_download")
+            ? "I understand these code downloads are not protected by HTTPS."
+            : kinds.has("downloaded_code_execution")
+              ? "Review downloaded code execution"
+              : assessment.updating
+                ? "This update changes executable downloads"
+                : "Review executable downloads";
   const acknowledgment = root
     ? "I understand it will have administrator access."
-    : "I understand Decky will download additional executable files.";
+    : kinds.has("downloaded_code_execution")
+      ? "I understand this version can run downloaded code."
+      : "I understand Decky will download additional executable files.";
   useLayoutEffect(() => {
     const button = cancel.current?.querySelector<HTMLButtonElement>("button");
     button?.focus({ preventScroll: true });
@@ -205,6 +189,52 @@ export function SecurityReview({
               )}
             </p>
           )}
+          {kinds.has("privileged_execution") && (
+            <p>
+              {t(
+                "This version tries to run commands with administrator privileges.",
+              )}
+            </p>
+          )}
+          {kinds.has("insecure_code_download") && (
+            <p>
+              {t(
+                "Executable code is downloaded over HTTP. It could be changed in transit.",
+              )}
+            </p>
+          )}
+          {kinds.has("external_binary_project_changed") && (
+            <div>
+              <p>
+                {t(
+                  "An executable download now comes from a different project.",
+                )}
+              </p>
+              <ul>
+                {assessment.changed_binary_projects?.map((name) => {
+                  const old = assessment.previous_external_binaries?.find(
+                    (binary) => binary.name === name,
+                  );
+                  const next = assessment.external_binaries.find(
+                    (binary) => binary.name === name,
+                  );
+                  return (
+                    <li key={name}>
+                      {name}: {old?.source_project || old?.source_host} →{" "}
+                      {next?.source_project || next?.source_host}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          {kinds.has("downloaded_code_execution") && (
+            <p>
+              {t(
+                "A command may download and run code. Review the details before continuing.",
+              )}
+            </p>
+          )}
           {assessment.external_binaries.length > 0 && (
             <p>
               {t("Decky will download additional executable files.")}
@@ -219,8 +249,11 @@ export function SecurityReview({
             </p>
           )}
         </div>
-        <SecurityDetails
-          facts={assessment}
+        <Capabilities
+          analysis={assessment.capabilities}
+          changes={assessment.capability_changes}
+          rootRequested={assessment.root_requested}
+          externalBinaries={assessment.external_binaries}
           onGamepadDirection={controllerNavigation.onGamepadDirection}
         />
         <DialogCheckbox

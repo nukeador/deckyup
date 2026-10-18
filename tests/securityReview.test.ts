@@ -130,6 +130,9 @@ test("controller review starts on Cancel, blocks repeated A, restores origin and
     dialog.textContent?.includes("It can modify SteamOS files and settings."),
   );
   assert.equal(dialog.textContent?.includes("Python backend included"), false);
+  assert.equal(dialog.querySelectorAll(".ddu-capability-row").length, 1);
+  assert.equal(dialog.textContent?.includes("Security details"), false);
+  assert.equal(dialog.querySelectorAll(".ddu-capability-summary").length, 0);
   const disclosure = dialog.querySelector("[aria-expanded]")!;
   const move = async (button: number) => {
     await act(async () => {
@@ -476,7 +479,7 @@ test("Find Plugins cancellation invalidates its ticket without a native request 
   assert.equal(await finder.check(), false);
 });
 
-test("installed details show four concise points and a subdued native uninstall action at the end", async () => {
+test("installed details omit redundant manifest points and keep native uninstall at the end", async () => {
   const { PluginDetails } = await import("../src/PluginDetails");
   const dom = new JSDOM("<div id='root'></div>", { pretendToBeVisual: true });
   Object.assign(globalThis, {
@@ -529,13 +532,11 @@ test("installed details show four concise points and a subdued native uninstall 
   });
   assert.equal(
     document.querySelectorAll(".ddu-security-summary > li").length,
-    4,
+    0,
   );
   assert.equal(
-    document
-      .querySelector(".ddu-security-summary")
-      ?.textContent?.includes("Python backend included"),
-    true,
+    document.body.textContent?.includes("Python backend included"),
+    false,
   );
   assert.equal(
     document.body.textContent?.includes("This is a manifest review"),
@@ -834,4 +835,167 @@ test("Find Plugins translates backend compatibility errors into the Steam UI lan
     dom.window.close();
     Object.assign(globalThis, { SteamClient: previousSteam });
   }
+});
+
+test("capabilities show one plain explanation without source-code details", async () => {
+  const { Capabilities } = await import("../src/Capabilities");
+  const dom = new JSDOM("<div id='root'></div>", { pretendToBeVisual: true });
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    HTMLElement: dom.window.HTMLElement,
+    IS_REACT_ACT_ENVIRONMENT: true,
+  });
+  const component = createRoot(document.getElementById("root")!);
+  const analysis = {
+    scanner_version: 1,
+    evidence_hash: "a".repeat(64),
+    complete: true,
+    limitations: [],
+    findings: [1, 2].map((line) => ({
+      category: "network",
+      description: "Code operation",
+      file: "main.py",
+      line,
+      confidence: "identified",
+      origin: "source",
+      targets: ["updates.example.org"],
+    })),
+  };
+  await act(async () =>
+    component.render(createElement(Capabilities, { analysis })),
+  );
+  const rows = document.querySelectorAll(".ddu-capability-row");
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].textContent?.trim(), "Network access");
+  assert.equal(document.body.textContent?.includes("main.py"), false);
+  await act(async () => {
+    rows[0].dispatchEvent(
+      new dom.window.Event("decky-activate", { bubbles: true }),
+    );
+  });
+  assert.equal(rows[0].getAttribute("aria-expanded"), "true");
+  assert.match(
+    document.body.textContent!,
+    /Can connect to the internet and exchange data/,
+  );
+  assert.equal(
+    document.querySelectorAll(".ddu-capability-targets li").length,
+    1,
+  );
+  assert.match(document.body.textContent!, /updates.example.org/);
+  assert.match(document.body.textContent!, /other unidentified destinations/);
+  assert.equal(document.body.textContent?.includes("main.py"), false);
+  assert.equal(document.body.textContent?.includes("Code operation"), false);
+  assert.match(document.body.textContent!, /No access is restricted/);
+  const note = document.querySelector(".ddu-capabilities-note")!;
+  assert.ok(
+    rows[0].compareDocumentPosition(note) &
+      dom.window.Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  await act(async () =>
+    component.render(
+      createElement(Capabilities, {
+        analysis: {
+          ...analysis,
+          complete: false,
+          limitations: [
+            "Analysis limit reached",
+            "Binary behavior not analyzed",
+          ],
+          findings: [
+            {
+              category: "native_binaries",
+              description: "Bundled native binary",
+              file: "bin/helper",
+              line: null,
+              confidence: "identified",
+              origin: "binary",
+            },
+          ],
+        },
+        externalBinaries: [
+          {
+            name: "downloaded-helper",
+            source_host: "example.org",
+            declared_hash: null,
+          },
+        ],
+      }),
+    ),
+  );
+  const programs = document.querySelector(".ddu-capability-row") as HTMLElement;
+  assert.match(programs.textContent!, /Additional programs/);
+  await act(async () => programs.click());
+  assert.match(
+    document.body.textContent!,
+    /Their behavior has not been analyzed/,
+  );
+  assert.match(document.body.textContent!, /downloaded-helper/);
+  assert.equal(
+    document.querySelectorAll(".ddu-capability-explanation li").length,
+    2,
+  );
+  assert.equal(document.body.textContent?.includes("bin/helper"), false);
+  assert.equal(
+    document.body.textContent?.includes("Analysis limit reached"),
+    false,
+  );
+  await act(async () =>
+    component.render(
+      createElement(Capabilities, {
+        analysis: {
+          ...analysis,
+          findings: [
+            {
+              category: "devices",
+              description: "Device path referenced",
+              file: "main.py",
+              line: 1,
+              confidence: "heuristic",
+              origin: "source",
+              targets: [
+                "/dev/snd/pcmC0D0c",
+                "/dev/dri/renderD128",
+                "/dev/unknown0",
+              ],
+            },
+          ],
+        },
+      }),
+    ),
+  );
+  const devices = document.querySelector(".ddu-capability-row") as HTMLElement;
+  await act(async () => devices.click());
+  assert.match(
+    document.body.textContent!,
+    /Audio input \(such as a microphone\)/,
+  );
+  assert.match(document.body.textContent!, /Graphics hardware/);
+  assert.match(document.body.textContent!, /\/dev\/unknown0/);
+  assert.equal(document.body.textContent?.includes("/dev/snd/pcmC0D0c"), false);
+  await act(async () => component.unmount());
+  dom.window.close();
+});
+
+test("downloaded-code review uses the same acknowledgment gate before native confirmation", async () => {
+  const f = setup();
+  const selection = staged("download", {
+    ...rootAssessment,
+    root_requested: false,
+    flags: [],
+    previous_root_requested: false,
+    findings: [{ kind: "downloaded_code_execution", severity: "warning" }],
+  });
+  f.select(selection);
+  const result = f.installer.request(selection);
+  f.installer.continue("download");
+  assert.equal(f.native(), 0);
+  assert.equal(f.authorizations(), 0);
+  f.installer.acknowledge("different-package", true);
+  assert.equal(f.installer.getSnapshot()?.acknowledged, false);
+  f.installer.acknowledge("download", true);
+  f.installer.continue("download");
+  assert.equal((await result).requested, true);
+  assert.equal(f.native(), 1);
 });

@@ -21,7 +21,7 @@ class State:
         except (ValueError, OSError):
             # Preserve malformed state for manual recovery instead of overwriting it.
             raise ValueError("Cannot read persistent state; recover state.json before continuing")
-        sections = ("sources", "cache", "associations", "discovery")
+        sections = ("sources", "cache", "associations", "discovery", "capabilities")
         for section in sections:
             self.data.setdefault(section, {})
         if not all(isinstance(self.data[key], dict) for key in sections):
@@ -31,9 +31,12 @@ class State:
         with self.lock:
             return self.data[section].get(key)
 
-    def put(self, section, key, value, max_find_entries=None):
+    def put(self, section, key, value, max_find_entries=None, max_entries=None):
         with self.lock:
             self.data[section][key] = value
+            if max_entries:
+                for old in list(self.data[section])[:-max_entries]:
+                    del self.data[section][old]
             if max_find_entries:
                 entries = sorted(
                     (

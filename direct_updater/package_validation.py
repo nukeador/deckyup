@@ -16,6 +16,7 @@ from .github_releases import SafeRedirect, check_download_url
 from .versions import Version
 from .tls import github_ssl_context
 from .security import security_facts
+from .capabilities import SCANNER_VERSION, scan_archive, with_manifest
 
 MAX_DOWNLOAD = 512 * 1024 * 1024
 MAX_EXPANDED = 2 * 1024 * 1024 * 1024
@@ -23,7 +24,9 @@ MAX_FILES = 30000
 MAX_MANIFEST = 1024 * 1024
 
 
-def validate_package(path, name, version, expected_root=None, expected_package_name=None):
+def validate_package(
+    path, name, version, expected_root=None, expected_package_name=None, capability_cache=None
+):
     try:
         with zipfile.ZipFile(path) as archive:
             entries = archive.infolist()
@@ -114,6 +117,34 @@ def validate_package(path, name, version, expected_root=None, expected_package_n
             if archive.testzip() is not None:
                 raise ValueError("Corrupt ZIP contents")
             security = security_facts(manifest, package, paths.get(f"{root}/main.py") is False)
+            artifact_hash = None
+            cached = None
+            if capability_cache is not None:
+                digest = hashlib.sha256()
+                with open(path, "rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+                artifact_hash = digest.hexdigest()
+                cached = capability_cache.get("capabilities", artifact_hash)
+            identity = [root, name, package.get("name", ""), package["version"]]
+            if (
+                cached
+                and cached.get("identity") == identity
+                and cached.get("analysis", {}).get("scanner_version") == SCANNER_VERSION
+            ):
+                security["capabilities"] = cached["analysis"]
+            else:
+                security["capabilities"] = with_manifest(scan_archive(archive, root), security)
+                if capability_cache is not None:
+                    capability_cache.put(
+                        "capabilities",
+                        artifact_hash,
+                        {
+                            "identity": identity,
+                            "analysis": security["capabilities"],
+                        },
+                        max_entries=32,
+                    )
             return {
                 "security": security,
                 "root": root,
@@ -173,7 +204,14 @@ def cleanup_staged(directory):
 
 
 def stage_download(
-    asset, repo, name, version, directory, expected_root=None, expected_package_name=None
+    asset,
+    repo,
+    name,
+    version,
+    directory,
+    expected_root=None,
+    expected_package_name=None,
+    capability_cache=None,
 ):
     url = asset.get("browser_download_url", "")
     parsed = urllib.parse.urlsplit(url)
@@ -231,7 +269,11 @@ def stage_download(
             if authoritative != "sha256:" + checksum:
                 raise ValueError("GitHub asset checksum mismatch")
         validated = validate_package(
-            temporary, name, version, expected_package_name=expected_package_name
+            temporary,
+            name,
+            version,
+            expected_package_name=expected_package_name,
+            capability_cache=capability_cache,
         )
         if expected_root:
             repack_for_installed_folder(

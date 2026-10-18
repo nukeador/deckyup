@@ -1,3 +1,4 @@
+import type { SecurityFacts } from "./securityInstaller";
 import { useT } from "./i18n";
 import { SecurityDetails } from "./SecurityReview";
 import { requestUninstallConfirmation } from "./deckyInstaller";
@@ -42,8 +43,10 @@ export function PluginDetails({
   loadReleases,
   onInstallRelease,
   canUninstall = false,
+  loadSecurity,
 }: {
   canUninstall?: boolean;
+  loadSecurity?: (id: string) => Promise<SecurityFacts | null>;
   loadReleases: (id: string, cursor: string | null) => Promise<ReleasePage>;
   onInstallRelease: (
     release: ReleaseOption,
@@ -63,6 +66,19 @@ export function PluginDetails({
   backRef: (element: HTMLDivElement | null) => void;
 }) {
   const t = useT();
+  const [security, setSecurity] = useState<SecurityFacts | null>(null);
+  useEffect(() => {
+    let active = true;
+    setSecurity(null);
+    loadSecurity?.(plugin.id)
+      .then((facts) => {
+        if (active) setSecurity(facts);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [plugin.id, plugin.version, busy, loadSecurity]);
   const [versions, setVersions] = useState(false);
   const [manualSource, setManualSource] = useState(false);
   const [repository, setRepository] = useState("");
@@ -141,7 +157,18 @@ export function PluginDetails({
         )}
       </dl>
       <div className="ddu-detail-status">{t(pluginStatus(plugin).label)}</div>
-      <SecurityDetails facts={plugin.security || null} installed />
+      <SecurityDetails facts={security || plugin.security || null} installed />
+      {security?.candidate && (
+        <>
+          <small>
+            {t("Prepared version")}: {security.candidate.version}
+          </small>
+          <SecurityDetails
+            key={security.candidate.hash}
+            facts={security.candidate.assessment}
+          />
+        </>
+      )}
       {plugin.source && (
         <div className="ddu-source">
           <span className="ddu-source-label">{t("Source")}</span>

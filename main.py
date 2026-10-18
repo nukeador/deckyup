@@ -41,6 +41,12 @@ class Plugin:
     async def list_plugins(self):
         return await asyncio.to_thread(self._ready().list_plugins)
 
+    async def plugin_security(self, identifier):
+        try:
+            return await asyncio.to_thread(self._ready().plugin_security, identifier)
+        except (ValueError, OSError):
+            return None
+
     async def check_updates(self, refresh=False):
         loop = asyncio.get_running_loop()
         emit = getattr(decky, "emit", None)

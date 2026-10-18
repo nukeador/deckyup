@@ -1,11 +1,28 @@
-"""Manifest facts and deterministic review policy, not code or malware analysis."""
+"""Manifest facts and shared review policy. Static evidence is collected separately."""
 
 import re
 from urllib.parse import urlsplit
 
+from .capabilities import compare_capabilities
+
 INVALID_SECURITY = "Could not inspect package access. Installation stopped."
 CHANGED_SECURITY = "Prepared package or installed plugin changed. Prepare it again."
 ACK_REQUIRED = "Review plugin access before continuing."
+
+
+def binary_project(parsed):
+    host = (parsed.hostname or "").lower().rstrip(".")
+    parts = parsed.path.strip("/").split("/")
+    if host == "api.github.com" and parts[:1] == ["repos"]:
+        parts = parts[1:]
+    elif host not in {"github.com", "raw.githubusercontent.com"}:
+        return None
+    if len(parts) < 2 or any(
+        not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", part) or part in {".", ".."}
+        for part in parts[:2]
+    ):
+        return None
+    return "/".join(parts[:2]).lower().removesuffix(".git")
 
 
 def security_facts(manifest, package, backend):
@@ -58,7 +75,15 @@ def security_facts(manifest, package, backend):
             raise ValueError(INVALID_SECURITY) from error
         names.add(name)
         downloads.append(
-            {"name": name, "source_host": host, "declared_hash": digest, "source_url": url}
+            {
+                "name": name,
+                "source_host": host,
+                "declared_hash": digest,
+                "source_url": url,
+                "source_project": binary_project(parsed),
+                "source_scheme": parsed.scheme,
+                "source_port": parsed.port or (443 if parsed.scheme == "https" else 80),
+            }
         )
     return {
         "root_requested": "root" in flags,
@@ -98,6 +123,23 @@ def assess_security(current, previous=None, updating=False):
         and item["source_host"] != old_binaries[item["name"]]["source_host"]
     ]
 
+    project_changes = [
+        item["name"]
+        for item in current["external_binaries"]
+        if item["name"] in old_binaries
+        and item.get("source_project") != old_binaries[item["name"]].get("source_project")
+    ]
+    insecure_downloads = [
+        item["name"]
+        for item in current["external_binaries"]
+        if item.get("source_scheme") == "http"
+        and (
+            not updating
+            or item["name"] not in old_binaries
+            or old_binaries[item["name"]].get("source_scheme") != "http"
+        )
+    ]
+
     def finding(kind, warning=True):
         findings.append({"kind": kind, "severity": "warning" if warning else "information"})
 
@@ -114,14 +156,41 @@ def assess_security(current, previous=None, updating=False):
                 finding("external_binaries_added")
             if changed:
                 finding("external_binary_origin_changed")
+    if project_changes:
+        finding("external_binary_project_changed")
+    if insecure_downloads:
+        finding("insecure_code_download")
     if updating and previous is None:
         # Unknown is not equivalent to a known no-root installation.
         finding(
             "comparison_unavailable",
             current["root_requested"] or bool(current["external_binaries"]),
         )
+    current_analysis = current.get("capabilities")
+    previous_analysis = previous.get("capabilities") if previous else None
+
+    def sensitive(analysis, signal="downloaded_code_execution"):
+        return bool(analysis and any(item.get("signal") == signal for item in analysis["findings"]))
+
+    if sensitive(current_analysis) and (not updating or not sensitive(previous_analysis)):
+        finding("downloaded_code_execution")
+    if (
+        not current["root_requested"]
+        and sensitive(current_analysis, "privileged_execution")
+        and (not updating or not sensitive(previous_analysis, "privileged_execution"))
+    ):
+        finding("privileged_execution")
+    if (
+        sensitive(current_analysis, "insecure_code_download")
+        and (not updating or not sensitive(previous_analysis, "insecure_code_download"))
+        and not insecure_downloads
+    ):
+        finding("insecure_code_download")
     return {
         **public_facts(current),
+        "changed_binary_projects": project_changes,
+        "insecure_binary_names": insecure_downloads,
+        "capability_changes": compare_capabilities(current_analysis, previous_analysis, updating),
         "previous_root_requested": old_root,
         "previous_has_python_backend": previous["has_python_backend"]
         if previous is not None
