@@ -16,6 +16,7 @@ import {
 } from "react";
 import { FaDownload, FaSyncAlt, FaSearch, FaCheck } from "react-icons/fa";
 import {
+  FRONTEND_VERSION,
   requestSelfUpdate,
   watchSelfUpdate,
   listenForInstallCompletion,
@@ -576,10 +577,11 @@ function UpdateIcon({ store }: { store: UpdateStore }) {
 }
 
 export default definePlugin(() => {
+  const frontend = { version: FRONTEND_VERSION, instance: crypto.randomUUID() };
   const securityInstaller = createSecurityInstaller({
     authorize: authorizeStaged,
     discard: discardStaged,
-    request: (staged) => requestSelfUpdate(staged),
+    request: (staged) => requestSelfUpdate(staged, undefined, frontend),
   });
   const store = createUpdateStore({
     list,
@@ -611,7 +613,14 @@ export default definePlugin(() => {
   const checkWhenDue = () => void store.refreshIfDue();
   window.addEventListener("online", checkWhenDue);
   window.addEventListener("focus", checkWhenDue);
-  const stopSelfUpdateWatch = watchSelfUpdate(list, Navigation);
+  const stopSelfUpdateWatch = watchSelfUpdate(
+    async () => {
+      await store.refresh(false);
+      return list();
+    },
+    Navigation,
+    frontend,
+  );
   return {
     name: "Decky Direct Updater",
     titleView: <div>Direct Updater</div>,

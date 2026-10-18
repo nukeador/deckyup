@@ -159,22 +159,26 @@ test("self-update reopens Decky only when installed version matches", async () =
     await reopenAfterSelfUpdate(
       async () => [{ name: self.name, version: "old" }],
       navigation,
+      { version: self.version, instance: "replacement" },
     );
     assert.equal(closed, 0);
     await reopenAfterSelfUpdate(
       async () => [{ name: self.name, version: self.version }],
       navigation,
+      { version: self.version, instance: "replacement" },
     );
     assert.equal(closed, 1);
     await reopenAfterSelfUpdate(
       async () => [{ name: self.name, version: self.version }],
       navigation,
+      { version: self.version, instance: "replacement" },
     );
     assert.equal(closed, 1);
     await requestSelfUpdate(self, async () => ({ requested: false }));
     await reopenAfterSelfUpdate(
       async () => [{ name: self.name, version: self.version }],
       navigation,
+      { version: self.version, instance: "replacement" },
     );
     assert.equal(closed, 1);
   } finally {
@@ -240,4 +244,110 @@ test("uninstall delegates only to Loader's own confirmation dialog", async () =>
     }).requested,
     false,
   );
+});
+
+test("self-update ignores the old frontend even after files change, and preserves the handoff across unmounts", async () => {
+  const previous = globalThis.window;
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    },
+  };
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { sessionStorage: storage },
+  });
+  try {
+    const self = { ...update, name: "Decky Direct Updater", version: "0.2.1" };
+    const oldFrontend = { version: "0.2.0", instance: "old" };
+    const replacement = { version: self.version, instance: "new" };
+    let closed = 0;
+    let opened = 0;
+    const navigation = {
+      CloseSideMenus: () => {
+        closed++;
+      },
+      OpenQuickAccessMenu: () => {
+        opened++;
+      },
+    };
+    const installed = async () => [{ name: self.name, version: self.version }];
+    await requestSelfUpdate(
+      self,
+      async () => ({ requested: true }),
+      oldFrontend,
+    );
+    const marker = [...values.values()][0];
+    await reopenAfterSelfUpdate(installed, navigation, oldFrontend);
+    assert.equal(
+      closed,
+      0,
+      "new files do not prove the new frontend is running",
+    );
+    assert.equal([...values.values()][0], marker);
+    await reopenAfterSelfUpdate(installed, navigation, {
+      version: self.version,
+      instance: "old",
+    });
+    assert.equal(
+      closed,
+      0,
+      "the requesting instance cannot reopen even on same-version reinstall",
+    );
+    let finish!: (plugins: { name: string; version: string }[]) => void;
+    let active = true;
+    const checking = reopenAfterSelfUpdate(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      navigation,
+      replacement,
+      () => active,
+    );
+    active = false;
+    finish(await installed());
+    await checking;
+    assert.equal(closed, 0);
+    assert.equal(
+      [...values.values()][0],
+      marker,
+      "unmount during inventory must not consume the marker",
+    );
+    active = true;
+    await reopenAfterSelfUpdate(
+      installed,
+      navigation,
+      replacement,
+      () => active,
+    );
+    assert.equal(closed, 1);
+    assert.equal(values.size, 0);
+    active = false;
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal(opened, 0, "a disposed replacement must not reopen later");
+    await requestSelfUpdate(
+      self,
+      async () => ({ requested: true }),
+      oldFrontend,
+    );
+    await reopenAfterSelfUpdate(installed, navigation, replacement);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal(opened, 1);
+    await reopenAfterSelfUpdate(installed, navigation, replacement);
+    assert.equal(closed, 2, "the completed handoff is consumed only once");
+  } finally {
+    if (previous === undefined)
+      delete (globalThis as { window?: Window }).window;
+    else
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previous,
+      });
+  }
 });

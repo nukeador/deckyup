@@ -59,6 +59,15 @@ export function requestUninstallConfirmation(
 const SELF_NAME = "Decky Direct Updater";
 const SELF_REOPEN_KEY = "decky-direct-updater:self-reopen";
 const REOPEN_EXPIRY = 30 * 60 * 1000;
+export interface SelfUpdateFrontend {
+  version: string;
+  instance: string;
+}
+export const FRONTEND_VERSION = "__DDU_FRONTEND_VERSION__";
+const moduleFrontend: SelfUpdateFrontend = {
+  version: FRONTEND_VERSION,
+  instance: crypto.randomUUID(),
+};
 
 function session(): Storage | undefined {
   try {
@@ -72,12 +81,17 @@ function session(): Storage | undefined {
 export async function requestSelfUpdate(
   update: StagedUpdate,
   request: (update: StagedUpdate) => Promise<InstallResult> = requestUpdate,
+  frontend = moduleFrontend,
 ): Promise<InstallResult> {
   const storage = session();
   if (update.name !== SELF_NAME || !storage) return request(update);
   storage.setItem(
     SELF_REOPEN_KEY,
-    JSON.stringify({ version: update.version, created: Date.now() }),
+    JSON.stringify({
+      version: update.version,
+      created: Date.now(),
+      requester: frontend.instance,
+    }),
   );
   try {
     const result = await request(update);
@@ -95,11 +109,13 @@ export async function reopenAfterSelfUpdate(
     CloseSideMenus(): void;
     OpenQuickAccessMenu(tab: number): void;
   },
+  frontend = moduleFrontend,
+  isActive: () => boolean = () => true,
 ): Promise<void> {
   const storage = session();
   const raw = storage?.getItem(SELF_REOPEN_KEY);
   if (!raw || !storage) return;
-  let pending: { version: string; created: number };
+  let pending: { version: string; created: number; requester?: string };
   try {
     pending = JSON.parse(raw);
   } catch {
@@ -115,6 +131,14 @@ export async function reopenAfterSelfUpdate(
     storage.removeItem(SELF_REOPEN_KEY);
     return;
   }
+  // Disk inventory can change before Loader replaces the running frontend.
+  // Only the replacement mount may consume the marker and reopen its fresh view.
+  if (
+    pending.version !== frontend.version ||
+    pending.requester === frontend.instance ||
+    !isActive()
+  )
+    return;
   try {
     const plugins = await installed();
     if (
@@ -124,9 +148,12 @@ export async function reopenAfterSelfUpdate(
       )
     )
       return;
+    if (!isActive() || storage.getItem(SELF_REOPEN_KEY) !== raw) return;
     storage.removeItem(SELF_REOPEN_KEY);
     navigation.CloseSideMenus();
-    setTimeout(() => navigation.OpenQuickAccessMenu(999), 100);
+    setTimeout(() => {
+      if (isActive()) navigation.OpenQuickAccessMenu(999);
+    }, 100);
   } catch {
     // Preserve the marker for a later mount if inventory is temporarily unavailable.
   }
@@ -139,6 +166,7 @@ export function watchSelfUpdate(
     CloseSideMenus(): void;
     OpenQuickAccessMenu(tab: number): void;
   },
+  frontend = moduleFrontend,
 ): () => void {
   let active = true;
   let checking = false;
@@ -146,14 +174,12 @@ export function watchSelfUpdate(
     if (!active || checking || !session()?.getItem(SELF_REOPEN_KEY)) return;
     checking = true;
     try {
-      await reopenAfterSelfUpdate(installed, {
-        CloseSideMenus: () => {
-          if (active) navigation.CloseSideMenus();
-        },
-        OpenQuickAccessMenu: (tab) => {
-          if (active) navigation.OpenQuickAccessMenu(tab);
-        },
-      });
+      await reopenAfterSelfUpdate(
+        installed,
+        navigation,
+        frontend,
+        () => active,
+      );
     } finally {
       checking = false;
     }

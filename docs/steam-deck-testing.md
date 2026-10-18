@@ -175,3 +175,12 @@ Local tests emulate Decky gamepad events in a DOM; they cannot certify Steam's a
 - Cancel a Find Plugins security review: no native prompt, staged ZIP or remembered association should remain. Prepare again and accept the review: Decky's original prompt must still appear, and cancelling there must not report success.
 - With a review open, change the disposable installed manifest or staged ZIP. Continuing must stop with a localized error and require fresh preparation. Do not modify installed production plugins for this check.
 - After a genuine completed self-update, the old panel should close and Decky's updated panel reopen. Neither cancelling the review nor cancelling Decky's prompt should count as a completed installation.
+
+
+## Self-update frontend handoff regression
+
+- Install the corrected build, then update through its native flow to a different fixture version. The requesting instance must not reopen QAM merely because the new files are visible. Only the replacement frontend matching the target version may consume the pending handoff.
+- Repeat a downgrade and cancellation. Cancelled native prompts must not reopen the panel as a completed install.
+- Unloading during inventory verification must preserve the marker for the replacement; unloading after closing QAM must cancel the delayed reopen.
+- The fixture builder now rebuilds each frontend against its fixture manifest version, then restores both project manifests and the normal frontend build.
+- The first transition from an older unpatched frontend still runs that frontend's existing handler. If it reopens a stale view during this transition, close and reopen QAM manually; subsequent transitions must be tested from the corrected build. Do not restart Decky or write into installed plugin directories.
