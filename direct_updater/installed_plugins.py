@@ -5,6 +5,7 @@ import json
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
+from .security import public_facts, security_facts
 
 _REPO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]+$")
 
@@ -117,6 +118,15 @@ def installed_plugins(root):
                 metadata.append({})
                 errors.append(f"{name}: {error}")
         manifest, package = metadata
+        security = None
+        if not errors:
+            try:
+                backend = folder / "main.py"
+                if backend.is_symlink():
+                    raise ValueError("Unknown backend")
+                security = public_facts(security_facts(manifest, package, backend.is_file()))
+            except (OSError, ValueError):
+                pass
         name = manifest.get("name")
         if not isinstance(name, str) or not name:
             name = folder.name
@@ -125,6 +135,7 @@ def installed_plugins(root):
         result.append(
             {
                 "id": folder.name,
+                "security": security,
                 "name": name,
                 "version": (
                     package.get("version") if "version" in package else manifest.get("version")

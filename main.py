@@ -98,6 +98,26 @@ class Plugin:
     async def find_repositories(self, query, page=1):
         return await self._find_call("search", query, page)
 
+    async def authorize_staged(self, token, acknowledged=False):
+        try:
+            staged = await asyncio.to_thread(self._ready().authorize_staged, token, acknowledged)
+            return {"update": staged, "error": None}
+        except (ValueError, OSError) as error:
+            from direct_updater.security import ACK_REQUIRED, CHANGED_SECURITY
+
+            return {
+                "update": None,
+                "error": str(error)
+                if str(error) in {ACK_REQUIRED, CHANGED_SECURITY}
+                else CHANGED_SECURITY,
+            }
+
+    async def discard_staged(self, token):
+        try:
+            return await asyncio.to_thread(self._ready().discard_staged, token)
+        except (ValueError, OSError):
+            return False
+
     async def repository_details(self, repository):
         return await self._find_call("details", repository)
 

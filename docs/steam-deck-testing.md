@@ -163,3 +163,15 @@ Pending physical checks: directional focus including keyboard dismissal, touch, 
 ## Quick update actions — local 0.1.5
 
 In both Updates and All, activate the plugin name to open details, or move Right to its download icon and press A to prepare the update directly. The icon shows a spinner while preparing; repeated presses must not prepare another ZIP. Decky still asks for confirmation. Cancel must not report success or clear the update indicator. Check touch targets, Left/Right focus, long names, scroll retention and errors from the list. Non-update status icons remain part of the Details action. These physical checks remain pending.
+
+## Pre-install access review (hardware validation pending)
+
+Local tests emulate Decky gamepad events in a DOM; they cannot certify Steam's actual focus routing, screen-reader behavior or native installer integration. On hardware, use disposable test plugins and exercise each entry point: list update, details update, version selector (including a prerelease and an explicitly confirmed downgrade), Find Plugins install/update, and self-update.
+
+- Prepare a package with no root or binary declarations: only the normal Decky confirmation should appear. Optional Security details must identify the installed version, not claim to describe an unstaged release.
+- Prepare a package adding the exact `root` flag: verify a short administrator-access explanation and old/new comparison. `_root` alone must not trigger this warning.
+- Hold/repeatedly press A from the originating install/update control: initial review focus must be Cancel when visible, or the inactive heading for a long warning; Continue stays disabled before the checkbox is deliberately checked. Press B and check that the same plugin/release, list scroll and originating focus are restored. Repeat using keyboard Escape/Space/Enter, mouse and touch.
+- Confirm root unchanged and same-name/same-domain binary updates do not add a review. A new binary name or changed domain must trigger review. Verify long German/French/Spanish text wraps at QAM width and all controls remain reachable without horizontal scrolling.
+- Cancel a Find Plugins security review: no native prompt, staged ZIP or remembered association should remain. Prepare again and accept the review: Decky's original prompt must still appear, and cancelling there must not report success.
+- With a review open, change the disposable installed manifest or staged ZIP. Continuing must stop with a localized error and require fresh preparation. Do not modify installed production plugins for this check.
+- After a genuine completed self-update, the old panel should close and Decky's updated panel reopen. Neither cancelling the review nor cancelling Decky's prompt should count as a completed installation.

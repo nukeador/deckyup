@@ -43,11 +43,13 @@ class FixtureUpdater(Updater):
                 or selected["asset_id"] != asset_id):
             raise ValueError("Fixture selection no longer valid")
         source = self.fixture / "Decky-Direct-Updater-v0.1.1.zip"
-        validate_package(source, plugin["name"], selected["latest"], plugin["id"])
+        info = validate_package(source, plugin["name"], selected["latest"], plugin["id"], plugin["package_name"])
         self.staging.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(prefix="update-", suffix=".zip", dir=self.staging, delete=False) as target:
             with source.open("rb") as stream:
                 shutil.copyfileobj(stream, target)
             path = Path(target.name)
-        return {"artifact": "file://" + str(path.resolve()), "name": plugin["name"],
-                "version": selected["latest"], "hash": hashlib.sha256(path.read_bytes()).hexdigest()}
+        return self.security.register({"artifact": "file://" + str(path.resolve()), "name": plugin["name"],
+                "version": selected["latest"], "hash": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "root": info["root"], "package_name": info["package_name"],
+                "security_facts": info["security"]}, updating=True)

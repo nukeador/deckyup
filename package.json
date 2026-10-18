@@ -1,6 +1,6 @@
 {
   "name": "decky-direct-updater",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Keep your Decky plugins up to date directly from their developers.",
   "type": "module",
   "repository": {
@@ -14,8 +14,8 @@
     "build": "rollup -c --forceExit",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
-    "lint": "prettier --check src tests/*.ts '*.json' '*.js' .github/workflows/*.yml",
-    "format": "prettier --write src tests/*.ts '*.json' '*.js' .github/workflows/*.yml",
+    "lint": "prettier --check src tests/*.ts tests/mocks/*.mjs '*.json' '*.js' .github/workflows/*.yml",
+    "format": "prettier --write src tests/*.ts tests/mocks/*.mjs '*.json' '*.js' .github/workflows/*.yml",
     "check:version": "python3 scripts/check-version.py",
     "package": "bash scripts/build-local.sh",
     "fixtures": "python3 scripts/build-fixtures.py"
@@ -23,13 +23,17 @@
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
     "@decky/ui": "^4.11.0",
+    "@types/jsdom": "21.1.7",
+    "@types/node": "^22.0.0",
     "@types/react": "19.1.1",
     "@types/react-dom": "19.1.1",
-    "@types/node": "^22.0.0",
+    "jsdom": "26.1.0",
+    "prettier": "^3.6.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "rollup": "^4.53.3",
-    "typescript": "^5.6.2",
     "tsx": "^4.20.0",
-    "prettier": "^3.6.0"
+    "typescript": "^5.6.2"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",

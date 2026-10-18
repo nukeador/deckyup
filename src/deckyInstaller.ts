@@ -1,9 +1,14 @@
+import type { SecurityAssessment } from "./securityInstaller";
 /** Only dependency on Decky's undocumented installer route. */
 export interface StagedUpdate {
   artifact: string;
   name: string;
   version: string;
   hash: string;
+  security?: SecurityAssessment;
+  review_token?: string;
+  security_authorized?: boolean;
+  previous_version?: string | null;
   install_type?: "update" | "downgrade" | "install";
 }
 export interface Router {
@@ -18,6 +23,39 @@ export interface Router {
   call(route: string, ...args: unknown[]): Promise<unknown>;
 }
 export type InstallResult = { requested: boolean; error?: string };
+interface LoaderUninstallDialog {
+  uninstallPlugin(
+    name: string,
+    title: string,
+    buttonText: string,
+    description: string,
+  ): void;
+}
+
+/** Same native modal as Loader's plugin list. Never call the direct uninstall RPC. */
+export function requestUninstallConfirmation(
+  name: string,
+  text: { title: string; button: string; description: string },
+  loader: LoaderUninstallDialog | undefined = typeof window === "undefined"
+    ? undefined
+    : (window as unknown as { DeckyPluginLoader?: LoaderUninstallDialog })
+        .DeckyPluginLoader,
+): InstallResult {
+  if (!name || typeof loader?.uninstallPlugin !== "function")
+    return {
+      requested: false,
+      error: "Open Decky Settings → Plugins to uninstall this plugin.",
+    };
+  try {
+    loader.uninstallPlugin(name, text.title, text.button, text.description);
+    return { requested: true };
+  } catch {
+    return {
+      requested: false,
+      error: "Open Decky Settings → Plugins to uninstall this plugin.",
+    };
+  }
+}
 const SELF_NAME = "Decky Direct Updater";
 const SELF_REOPEN_KEY = "decky-direct-updater:self-reopen";
 const REOPEN_EXPIRY = 30 * 60 * 1000;
@@ -138,6 +176,11 @@ export async function requestUpdate(
   update: StagedUpdate,
   router: Router | undefined = loaderRouter(),
 ): Promise<InstallResult> {
+  if (update.security_authorized !== true)
+    return {
+      requested: false,
+      error: "Review plugin access before continuing.",
+    };
   const fallback =
     "Decky installer unavailable. Use Decky Settings → Install Plugin from ZIP to update manually.";
   if (typeof router?.call !== "function")

@@ -49,6 +49,7 @@ export const styles = `
 .ddu-actions > div { width: 100%; }
 .ddu-action-label { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 .ddu-action-label svg { flex-shrink: 0; }
+.ddu-actions .ddu-install-status { margin: 0; padding: 0; line-height: 1.4; color: var(--gpSystemLightGrey, #a9b1bc); }
 .ddu-release { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 48px; margin: 3px 0; border-radius: 3px; background: var(--gpBackground-DarkSoft, #171d25); cursor: pointer; overflow-wrap: anywhere; }
 .ddu-release-progress { display: flex; align-items: center; gap: 12px; padding: 12px; margin: 8px 0; border-radius: 4px; background: var(--gpBackground-LightMedium, #3d4450); }
 .ddu-release-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
@@ -60,5 +61,28 @@ export const styles = `
 .ddu-candidate small { color: var(--gpSystemLightGrey, #a9b1bc); line-height: 1.4; }
 .ddu-candidate > button { width: 100%; }
 .ddu-secondary { opacity: .85; }
+.ddu-security-review { box-sizing: border-box; overflow-y: auto; padding: 8px 16px 12px; gap: 8px; line-height: 1.4; overflow-wrap: anywhere; }
+.ddu-review-heading { font-size: 1.1rem; font-weight: 600; line-height: 1.4; margin: 0; }
+.ddu-review-heading:focus-visible { outline: 2px solid var(--gpSystemLightestGrey, #fff); outline-offset: 2px; }
+.ddu-review-heading svg { color: #e4b66a; margin-right: 6px; }
+.ddu-security-review p { margin: 8px 0; }
+.ddu-security-body { flex: 0 0 auto; overflow: visible; }
+.ddu-security-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-shrink: 0; margin: 0; }
+.ddu-security-actions > div { padding: 0; }
+.ddu-security-checkbox { display: flex; align-items: flex-start; gap: 8px; padding: 8px 4px; cursor: pointer; }
+.ddu-security-checkbox .DialogCheckbox { flex-shrink: 0; border: 2px solid #c7d5e0; background: #171d25; box-shadow: none; }
+.ddu-security-checkbox .DialogCheckbox.Active { background: #66c0f4; border-color: #66c0f4; color: #171d25; }
+.ddu-security-checkbox:focus, .ddu-security-checkbox:focus-within, .ddu-security-checkbox.gpfocus, .ddu-security-checkbox.gpfocuswithin { outline: 2px solid #fff; outline-offset: -2px; background: #3d4450; color: #fff; }
+.ddu-security-checkbox .DialogToggle_Label { color: inherit; }
+.ddu-security-checkbox svg { flex-shrink: 0; }
+.ddu-security-details { margin: 8px 0; overflow-wrap: anywhere; }
+.ddu-security-disclosure { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 4px; cursor: pointer; border-top: 1px solid rgba(169,177,188,.2); }
+.ddu-security-disclosure svg { flex-shrink: 0; width: 10px; height: 10px; }
+.ddu-disclosure-open { transform: rotate(90deg); }
+.ddu-security-binary { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+.ddu-security-summary { margin: 8px 0; padding-left: 20px; line-height: 1.45; }
+.ddu-security-summary > li { margin: 7px 0; }
+.ddu-actions > button.ddu-uninstall { background: transparent; color: var(--gpSystemLightGrey, #a9b1bc); box-shadow: none; }
+.ddu-actions > button.ddu-uninstall:focus-visible, .ddu-actions > button.ddu-uninstall:focus { outline: 2px solid var(--gpSystemLightestGrey, #fff); outline-offset: -2px; background: var(--gpBackground-LightMedium, #3d4450); }
 .ddu-footnote { color: var(--gpSystemLightGrey, #a9b1bc); font-size: .75rem; line-height: 1.4; margin-top: 16px; }
 `;

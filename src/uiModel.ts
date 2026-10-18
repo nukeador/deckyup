@@ -1,4 +1,6 @@
 export interface InstalledPlugin {
+  valid_identity?: boolean;
+  security?: import("./securityInstaller").SecurityFacts | null;
   id: string;
   name: string;
   version?: string;

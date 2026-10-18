@@ -65,6 +65,32 @@ def archive_bytes(name=NAME, version="0.1.1", extra=None, missing=None):
 
 
 class Workspace(unittest.TestCase):
+    def staged_package(
+        self, version="0.1.1", folder="updater", package="decky-direct-updater", extra=None
+    ):
+        directory = self.root / "data" / "staged"
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / "update-test.zip"
+        path.write_bytes(
+            archive_bytes(
+                version=version,
+                extra={
+                    "plugin/package.json": json.dumps({"name": package, "version": version}),
+                    **(extra or {}),
+                },
+            )
+        )
+        info = validate_package(path, NAME, version)
+        return {
+            "artifact": path.as_uri(),
+            "name": NAME,
+            "version": version,
+            "hash": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "root": folder,
+            "package_name": package,
+            "security_facts": info["security"],
+        }
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -241,7 +267,7 @@ class Releases(Workspace):
         entry = release()
         self.app.github.releases = Mock(return_value=[entry])
         with patch(
-            "direct_updater.plugin_updates.stage_download", return_value={"artifact": "local"}
+            "direct_updater.plugin_updates.stage_download", return_value=self.staged_package()
         ) as stage:
             self.app.stage("updater", 10, 20)
             self.assertEqual(stage.call_args.args[1:4], (REPO, NAME, "0.1.1"))
@@ -490,7 +516,12 @@ class Regression(Workspace):
             archive_bytes(
                 extra={
                     "plugin/package.json": json.dumps(
-                        {"version": "0.1.1", "remote_binary": [{"name": "binary"}]}
+                        {
+                            "version": "0.1.1",
+                            "remote_binary": [
+                                {"name": "binary", "url": "https://example.org/binary"}
+                            ],
+                        }
                     )
                 }
             )

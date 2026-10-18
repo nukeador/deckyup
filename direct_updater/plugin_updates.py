@@ -13,6 +13,7 @@ from .versions import Version
 from .release_selection import identity, release_option
 from .source_discovery import SourceDiscovery
 from .find_plugins import Finder
+from .security_staging import SecurityStaging
 
 
 class Updater:
@@ -21,6 +22,7 @@ class Updater:
         self.state = State(settings)
         self.github = GitHub(self.state)
         self.staging = Path(runtime) / "staged"
+        self.security = SecurityStaging(self.plugins, self.staging)
         self.operation = threading.RLock()
         self.discovery = SourceDiscovery(self.state, self.github)
         self.catalogues = {}
@@ -182,7 +184,7 @@ class Updater:
                 expected_package_name=plugin["package_name"],
             )
             staged["install_type"] = "downgrade" if option["downgrade"] else "update"
-            return staged
+            return self.security.register(staged, updating=True)
 
     def stage(self, identifier, release_id, asset_id):
         with self.operation:
@@ -202,7 +204,7 @@ class Updater:
                 raise ValueError("Selected update changed; check for updates again")
             release = next(item for item in releases if item["id"] == release_id)
             asset = next(item for item in release["assets"] if item["id"] == asset_id)
-            return stage_download(
+            staged = stage_download(
                 asset,
                 release.get("repository", source),
                 plugin["name"],
@@ -211,3 +213,12 @@ class Updater:
                 plugin["id"],
                 expected_package_name=plugin["package_name"],
             )
+            return self.security.register(staged, updating=True)
+
+    def authorize_staged(self, token, acknowledged=False):
+        with self.operation:
+            return self.security.authorize(token, acknowledged)
+
+    def discard_staged(self, token):
+        with self.operation:
+            return self.security.discard(token)

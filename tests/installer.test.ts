@@ -8,6 +8,7 @@ import {
 } from "../src/deckyInstaller";
 
 const update = {
+  security_authorized: true,
   artifact:
     "file:///home/deck/homebrew/data/decky-direct-updater/staged/update-abcd.zip",
   name: "MAKO - Frame Generation",
@@ -185,4 +186,58 @@ test("self-update reopens Decky only when installed version matches", async () =
         value: previous,
       });
   }
+});
+
+test("native adapter rejects packages without backend review authorization", async () => {
+  let called = false;
+  const result = await requestUpdate(
+    { ...update, security_authorized: false },
+    {
+      call: async () => {
+        called = true;
+      },
+    },
+  );
+  assert.equal(result.requested, false);
+  assert.equal(called, false);
+});
+
+test("uninstall delegates only to Loader's own confirmation dialog", async () => {
+  const { requestUninstallConfirmation } =
+    await import("../src/deckyInstaller");
+  const text = {
+    title: "Uninstall Example",
+    button: "Uninstall",
+    description: "Confirm removal?",
+  };
+  let args: string[] = [];
+  const loader = {
+    uninstallPlugin(...values: string[]) {
+      assert.equal(this, loader);
+      args = values;
+    },
+  };
+  assert.deepEqual(
+    requestUninstallConfirmation("Exact plugin name", text, loader),
+    { requested: true },
+  );
+  assert.deepEqual(args, [
+    "Exact plugin name",
+    text.title,
+    text.button,
+    text.description,
+  ]);
+  assert.equal(
+    requestUninstallConfirmation("Exact plugin name", text, undefined)
+      .requested,
+    false,
+  );
+  assert.equal(
+    requestUninstallConfirmation("Exact plugin name", text, {
+      uninstallPlugin() {
+        throw new Error("unavailable");
+      },
+    }).requested,
+    false,
+  );
 });

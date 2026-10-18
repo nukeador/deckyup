@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 from .github_releases import SafeRedirect, check_download_url
 from .versions import Version
 from .tls import github_ssl_context
+from .security import security_facts
 
 MAX_DOWNLOAD = 512 * 1024 * 1024
 MAX_EXPANDED = 2 * 1024 * 1024 * 1024
@@ -112,7 +113,9 @@ def validate_package(path, name, version, expected_root=None, expected_package_n
                 raise ValueError("Empty frontend")
             if archive.testzip() is not None:
                 raise ValueError("Corrupt ZIP contents")
+            security = security_facts(manifest, package, paths.get(f"{root}/main.py") is False)
             return {
+                "security": security,
                 "root": root,
                 "version": package["version"],
                 "expanded_size": total,
@@ -227,7 +230,9 @@ def stage_download(
         if authoritative:
             if authoritative != "sha256:" + checksum:
                 raise ValueError("GitHub asset checksum mismatch")
-        validate_package(temporary, name, version, expected_package_name=expected_package_name)
+        validated = validate_package(
+            temporary, name, version, expected_package_name=expected_package_name
+        )
         if expected_root:
             repack_for_installed_folder(
                 temporary, name, version, expected_root, expected_package_name
@@ -240,6 +245,9 @@ def stage_download(
         # Loader currently slices file:// instead of URL-decoding it. Runtime path
         # spaces are valid on disk and must remain literal for that implementation.
         return {
+            "security_facts": validated["security"],
+            "root": expected_root or validated["root"],
+            "package_name": validated["package_name"],
             "artifact": "file://" + str(Path(temporary).resolve()),
             "name": name,
             "version": version,

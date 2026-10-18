@@ -52,3 +52,21 @@ test("Decky follows Steam language identifiers and common regional variants", ()
   assert.equal(translate("es", "Up to date"), "Actualizado");
   assert.equal(translate("es", "nonexistent key"), "nonexistent key");
 });
+
+test("compact Spanish security review uses the agreed decision copy", () => {
+  assert.equal(
+    es["This plugin requests administrator access"],
+    "Este plugin solicita acceso de administrador",
+  );
+  assert.equal(
+    es[
+      "It can modify SteamOS files and settings. Install it only if you trust its developer."
+    ],
+    "Podrá modificar archivos y ajustes de SteamOS. Instálalo solo si confías en su desarrollador.",
+  );
+  assert.equal(
+    es["I understand it will have administrator access."],
+    "Entiendo que tendrá acceso de administrador.",
+  );
+  assert.equal(es.Continue, "Continuar");
+});

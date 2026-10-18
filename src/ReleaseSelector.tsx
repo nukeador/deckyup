@@ -78,7 +78,9 @@ export function ReleaseSelector({
     setError("");
     scroll.current = container.current?.scrollTop ?? 0;
     restoreLoadFocus.current = Boolean(
-      loadActions.current?.contains(document.activeElement),
+      loadActions.current?.contains(
+        loadActions.current.ownerDocument.activeElement,
+      ),
     );
     try {
       const page = await load(plugin.id, next);
@@ -288,7 +290,7 @@ export function ReleaseSelector({
           </div>
         </>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && <p role="status">{t(message)}</p>}
     </NavigationGroup>
   );
 }

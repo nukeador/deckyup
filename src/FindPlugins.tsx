@@ -1,5 +1,11 @@
 import { useT } from "./i18n";
-import { DialogButton, Focusable, TextField, Navigation } from "@decky/ui";
+import {
+  DialogButton,
+  Focusable,
+  TextField,
+  Navigation,
+  Spinner,
+} from "@decky/ui";
 import {
   useEffect,
   useLayoutEffect,
@@ -9,6 +15,7 @@ import {
 } from "react";
 import { FaArrowLeft, FaSearch } from "react-icons/fa";
 import { NavigationGroup } from "./NavigationGroup";
+import { useControllerNavigation } from "./useControllerNavigation";
 import {
   formatStars,
   type FindStore,
@@ -34,10 +41,13 @@ export function FindPlugins({
   cancelInstallation: () => Promise<void>;
 }) {
   const t = useT();
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const controllerNavigation = useControllerNavigation(navigationRef);
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const [selected, setSelected] = useState<Repository | null>(null);
   const [detail, setDetail] = useState<RepositoryDetails | null>(null);
   const [busy, setBusy] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [message, setMessage] = useState("");
   const [requested, setRequested] = useState(false);
   const detailCache = useRef(
@@ -133,12 +143,18 @@ export function FindPlugins({
   const row = selected;
   return (
     <NavigationGroup
+      ref={navigationRef}
+      {...(selected ? controllerNavigation : {})}
       className="ddu-main"
       hidden={!open}
       flow-children="column"
       onCancelButton={(event) => {
         event.stopPropagation();
-        if (document.activeElement?.matches("input,textarea")) {
+        if (
+          navigationRef.current?.ownerDocument.activeElement?.matches(
+            "input,textarea",
+          )
+        ) {
           backRef.current?.focus({ preventScroll: true });
           return;
         }
@@ -282,24 +298,47 @@ export function FindPlugins({
                 !detail?.token ||
                 !["install", "update"].includes(detail.status)
               }
+              aria-busy={preparing}
               onClick={() =>
                 void action(async () => {
-                  const result = await install(detail!);
-                  if (!result.startsWith("Confirmation requested"))
-                    detailCache.current.delete(row.repository);
-                  setMessage(result);
-                  setRequested(result.startsWith("Confirmation requested"));
+                  setPreparing(true);
+                  setMessage("");
+                  try {
+                    const result = await install(detail!);
+                    if (!result.startsWith("Confirmation requested"))
+                      detailCache.current.delete(row.repository);
+                    setMessage(result);
+                    setRequested(result.startsWith("Confirmation requested"));
+                  } finally {
+                    setPreparing(false);
+                  }
                 })
               }
             >
-              {detail?.status === "update"
-                ? t("Update")
-                : detail?.status === "current"
-                  ? t("Up to date")
-                  : detail?.status === "version_unavailable"
-                    ? t("Version unavailable")
-                    : t("Install")}
+              {preparing ? (
+                <span className="ddu-action-label">
+                  <Spinner style={{ width: 18, height: 18, flexShrink: 0 }} />
+                  <span>{t("Preparing…")}</span>
+                </span>
+              ) : detail?.status === "update" ? (
+                t("Update")
+              ) : detail?.status === "current" ? (
+                t("Up to date")
+              ) : detail?.status === "version_unavailable" ? (
+                t("Version unavailable")
+              ) : (
+                t("Install")
+              )}
             </DialogButton>
+            {preparing && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="ddu-install-status"
+              >
+                {t("Downloading and checking ZIP…")}
+              </div>
+            )}
             {requested && (
               <>
                 <DialogButton

@@ -49,7 +49,14 @@ export function createFindInstaller(deps: {
           repository: selection.repository,
           name: staged.name,
         });
-        const result = await deps.request(staged);
+        let result: InstallResult;
+        try {
+          result = await deps.request(staged);
+        } catch {
+          tickets.delete(staged.ticket);
+          await deps.finish(staged.ticket, true);
+          return "Installation failed. Try again.";
+        }
         if (!result.requested) {
           tickets.delete(staged.ticket);
           await deps.finish(staged.ticket, true);

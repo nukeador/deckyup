@@ -47,6 +47,7 @@ class ManualSelection(Workspace):
 
     @patch("direct_updater.plugin_updates.stage_download", return_value={"artifact": "staged"})
     def test_explicit_downgrade_requires_consent_then_uses_generic_staging(self, stage):
+        stage.return_value = self.staged_package(version="0.9.0")
         first = self.app.list_releases("updater")
         old = self.app.list_releases("updater", first["next_cursor"])["releases"][0]
         for consent in (False, "true", 1):
@@ -62,6 +63,7 @@ class ManualSelection(Workspace):
 
     @patch("direct_updater.plugin_updates.stage_download", return_value={})
     def test_prerelease_manual_only_and_does_not_save_channel(self, stage):
+        stage.return_value = self.staged_package(version="2.0.0-rc.1")
         selected = self.app.list_releases("updater")["releases"][0]
         result = self.app.stage_release("updater", selected["release_id"], selected["asset_id"])
         self.assertEqual(result["install_type"], "update")

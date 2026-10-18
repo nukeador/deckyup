@@ -16,7 +16,6 @@ import {
 } from "react";
 import { FaDownload, FaSyncAlt, FaSearch, FaCheck } from "react-icons/fa";
 import {
-  requestUpdate,
   requestSelfUpdate,
   watchSelfUpdate,
   listenForInstallCompletion,
@@ -38,6 +37,11 @@ import {
 } from "./findStore";
 import { styles } from "./styles";
 import { LanguageProvider, useT } from "./i18n";
+import {
+  createSecurityInstaller,
+  type SecurityInstaller,
+} from "./securityInstaller";
+import { SecurityReviewBoundary } from "./SecurityReview";
 import {
   emptyMessage,
   emptyUpdatesState,
@@ -91,6 +95,11 @@ const finishRepository = callable<
   [string, boolean],
   { installed: boolean; error?: string }
 >("finish_repository");
+const authorizeStaged = callable<
+  [string, boolean],
+  { update: StagedUpdate | null; error: string | null }
+>("authorize_staged");
+const discardStaged = callable<[string], boolean>("discard_staged");
 interface FinderActions {
   install: (selection: RepositoryDetails) => Promise<string>;
   check: () => Promise<boolean>;
@@ -100,10 +109,12 @@ function Content({
   store,
   finder,
   finderActions,
+  securityInstaller,
 }: {
   store: UpdateStore;
   finder: FindStore;
   finderActions: FinderActions;
+  securityInstaller: SecurityInstaller;
 }) {
   const t = useT();
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot);
@@ -140,7 +151,9 @@ function Content({
       if (listRef.current)
         pendingList.current = {
           scrollTop: listRef.current.scrollTop,
-          focused: listRef.current.contains(document.activeElement),
+          focused: listRef.current.contains(
+            listRef.current.ownerDocument.activeElement,
+          ),
         };
     });
   }, [store]);
@@ -178,7 +191,9 @@ function Content({
     if (selected) {
       if (
         backRef.current &&
-        !backRef.current.parentElement?.contains(document.activeElement)
+        !backRef.current.parentElement?.contains(
+          backRef.current.ownerDocument.activeElement,
+        )
       ) {
         backRef.current.focus({ preventScroll: true });
       }
@@ -238,7 +253,7 @@ function Content({
       );
       if (response.error || !response.update)
         throw new Error(response.error || "Update preparation failed");
-      const result = await requestSelfUpdate(response.update);
+      const result = await securityInstaller.request(response.update);
       if (!result.requested) throw new Error(result.error);
       if (mounted.current)
         setMessages((previous) => ({
@@ -341,7 +356,7 @@ function Content({
             {plugins.find((plugin) => plugin.id === rowActionId)?.name}:{" "}
             {working === rowActionId
               ? t("Preparing update…")
-              : messages[rowActionId]}
+              : t(messages[rowActionId])}
           </div>
         )}
         <NavigationGroup
@@ -423,6 +438,11 @@ function Content({
       />
       {selected && !finding && (
         <PluginDetails
+          canUninstall={
+            selected.valid_identity === true &&
+            plugins.filter((plugin) => plugin.name === selected.name).length ===
+              1
+          }
           plugin={selected}
           loadReleases={releases}
           onInstallRelease={(release, confirmed) =>
@@ -437,7 +457,7 @@ function Content({
               );
               if (response.error || !response.update)
                 throw new Error(response.error || "Version preparation failed");
-              const result = await requestSelfUpdate(response.update);
+              const result = await securityInstaller.request(response.update);
               if (!result.requested) throw new Error(result.error);
               if (mounted.current)
                 setMessages((previous) => ({
@@ -556,6 +576,11 @@ function UpdateIcon({ store }: { store: UpdateStore }) {
 }
 
 export default definePlugin(() => {
+  const securityInstaller = createSecurityInstaller({
+    authorize: authorizeStaged,
+    discard: discardStaged,
+    request: (staged) => requestSelfUpdate(staged),
+  });
   const store = createUpdateStore({
     list,
     check,
@@ -575,7 +600,7 @@ export default definePlugin(() => {
   const finderActions = createFindInstaller({
     stage: stageRepository,
     finish: finishRepository,
-    request: requestUpdate,
+    request: securityInstaller.request,
     refresh: () => store.refresh(false),
     installed: (repository) => finder.installed(repository),
   });
@@ -592,11 +617,19 @@ export default definePlugin(() => {
     titleView: <div>Direct Updater</div>,
     content: (
       <LanguageProvider>
-        <Content store={store} finder={finder} finderActions={finderActions} />
+        <SecurityReviewBoundary installer={securityInstaller}>
+          <Content
+            store={store}
+            finder={finder}
+            finderActions={finderActions}
+            securityInstaller={securityInstaller}
+          />
+        </SecurityReviewBoundary>
       </LanguageProvider>
     ),
     icon: <UpdateIcon store={store} />,
     onDismount() {
+      securityInstaller.dispose();
       window.removeEventListener("online", checkWhenDue);
       window.removeEventListener("focus", checkWhenDue);
       stopSelfUpdateWatch();

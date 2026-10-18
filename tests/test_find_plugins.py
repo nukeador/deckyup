@@ -228,13 +228,28 @@ class FindPlugins(Workspace):
         path.write_bytes(
             archive_bytes(
                 extra={
+                    "plugin/plugin.json": json.dumps(
+                        {"name": NAME, "flags": kwargs.get("flags", [])}
+                    ),
                     "plugin/package.json": json.dumps(
                         {"name": kwargs.get("package", "decky-direct-updater"), "version": "0.1.1"}
-                    )
+                    ),
                 }
             )
         )
-        return {"artifact": path.as_uri(), "name": NAME, "version": "0.1.1", "hash": "a" * 64}
+        from direct_updater.package_validation import validate_package
+        import hashlib
+
+        info = validate_package(path, NAME, "0.1.1")
+        return {
+            "artifact": path.as_uri(),
+            "name": NAME,
+            "version": "0.1.1",
+            "hash": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "root": info["root"],
+            "package_name": info["package_name"],
+            "security_facts": info["security"],
+        }
 
     def test_new_install_completion_and_cancel_do_not_record_request_as_success(self):
         self.authorize()
@@ -260,9 +275,29 @@ class FindPlugins(Workspace):
         ):
             detail = self.finder.details(REPO)
             staged = self.finder.stage(detail["token"], 10, 20)
+            self.app.authorize_staged(staged["review_token"], False)
             self.install(folder="plugin", version="0.1.1")
             self.assertTrue(self.finder.finish(staged["ticket"])["installed"])
             self.assertEqual(self.app.state.get("associations", "plugin")["origin"], "confirmed")
+
+    def test_pending_security_review_cannot_record_an_unrelated_installation(self):
+        self.authorize()
+        self.app.github.releases = Mock(return_value=[release()])
+        with (
+            self.project(),
+            patch(
+                "direct_updater.find_plugins.stage_download",
+                return_value=self.staged(flags=["root"]),
+            ),
+        ):
+            detail = self.finder.details(REPO)
+            staged = self.finder.stage(detail["token"], 10, 20)
+            self.assertTrue(staged["security"]["requires_acknowledgment"])
+            self.install(folder="plugin", version="0.1.1")
+            self.assertFalse(self.finder.finish(staged["ticket"])["installed"])
+            self.finder.finish(staged["ticket"], True)
+            self.assertEqual(self.app.state.data["associations"], {})
+            self.assertFalse((self.app.staging / "update-test.zip").exists())
 
     def test_stage_revalidates_ids_repository_and_package_identity(self):
         self.authorize()
@@ -291,7 +326,9 @@ class FindPlugins(Workspace):
         self.app.github.releases = Mock(return_value=[release()])
         with (
             self.project(),
-            patch.object(self.app, "stage", return_value={"artifact": "validated"}) as stage,
+            patch.object(
+                self.app, "stage", return_value={"artifact": "validated", "review_token": "review"}
+            ) as stage,
         ):
             detail = self.finder.details(REPO)
             staged = self.finder.stage(detail["token"], 10, 20)
@@ -362,6 +399,7 @@ class FindPlugins(Workspace):
         ):
             detail = self.finder.details(REPO)
             staged = self.finder.stage(detail["token"], 10, 20)
+            self.app.authorize_staged(staged["review_token"], False)
             folder = self.install(folder="plugin", version="0.1.0")
             self.assertFalse(self.finder.finish(staged["ticket"])["installed"])
             (folder / "package.json").write_text(

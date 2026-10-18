@@ -1,7 +1,5 @@
-- Detect the Steam interface language automatically and translate the plugin UI into English, Spanish, German, French, Japanese, Korean, Polish, Portuguese, Russian and Chinese.
-- Keep tab counters visible with long translated labels. Standardize detail button widths, add action icons and a translated “View website” button linking to the plugin’s GitHub repository.
-- Show only the centered check and “You’re up to date” message in the empty Updates view (“Todo actualizado” in Spanish).
-- Accept release tags such as `v0.17`, normalizing them to `0.17.0` for version comparison and manual installation.
-- Show a loading spinner beside the selected release and a preparation status while its ZIP is being prepared.
-- Keep watching for self-update completion so the old panel can close and the updated Decky panel reopen once the replacement version is confirmed.
-- Count real elapsed time, including suspension: opening Quick Access or the plugin after four hours triggers a fresh update check. Retry overdue checks when connectivity returns, with duplicate requests and rapid retries suppressed.
+- Review plugin access before installation using the exact downloaded and validated ZIP. New administrator access, additional executable downloads, and changed download domains receive contextual warnings; routine updates with unchanged access do not add another confirmation step.
+- Add a compact, controller-friendly Security Review with concise explanations in all ten supported languages, expandable technical details, an explicit acknowledgment checkbox, and visible focus states. Decky’s native installation confirmation remains required.
+- Bind each security review to its staged package and checksum. Cancelling the review removes the staged ZIP and invalidates its pending authorization.
+- Add concise Security details to installed plugin pages and a subdued Uninstall shortcut that opens Decky’s own uninstall confirmation.
+- Show immediate download and ZIP-validation feedback when installing a plugin from search results, and improve controller navigation in search details and security reviews, including left/right navigation between review actions.

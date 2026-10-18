@@ -1,4 +1,6 @@
 import { useT } from "./i18n";
+import { SecurityDetails } from "./SecurityReview";
+import { requestUninstallConfirmation } from "./deckyInstaller";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ReleaseSelector,
@@ -15,6 +17,7 @@ import {
   FaSyncAlt,
   FaExternalLinkAlt,
   FaExchangeAlt,
+  FaTrashAlt,
 } from "react-icons/fa";
 import {
   pluginActions,
@@ -38,7 +41,9 @@ export function PluginDetails({
   backRef,
   loadReleases,
   onInstallRelease,
+  canUninstall = false,
 }: {
+  canUninstall?: boolean;
   loadReleases: (id: string, cursor: string | null) => Promise<ReleasePage>;
   onInstallRelease: (
     release: ReleaseOption,
@@ -61,6 +66,7 @@ export function PluginDetails({
   const [versions, setVersions] = useState(false);
   const [manualSource, setManualSource] = useState(false);
   const [repository, setRepository] = useState("");
+  const [uninstallError, setUninstallError] = useState("");
   useEffect(() => {
     setManualSource(false);
     setRepository("");
@@ -135,6 +141,7 @@ export function PluginDetails({
         )}
       </dl>
       <div className="ddu-detail-status">{t(pluginStatus(plugin).label)}</div>
+      <SecurityDetails facts={plugin.security || null} installed />
       {plugin.source && (
         <div className="ddu-source">
           <span className="ddu-source-label">{t("Source")}</span>
@@ -147,11 +154,12 @@ export function PluginDetails({
         plugin.metadata_error ||
         plugin.discovery_error) && (
         <div role="status" className="ddu-detail-status">
-          {message ||
-            plugin.error ||
-            plugin.discovery_error ||
-            plugin.source_note ||
-            plugin.metadata_error}
+          {message
+            ? t(message)
+            : plugin.error ||
+              plugin.discovery_error ||
+              plugin.source_note ||
+              plugin.metadata_error}
         </div>
       )}
       {plugin.status === "no_release" && (
@@ -294,7 +302,30 @@ export function PluginDetails({
             </span>
           </DialogButton>
         )}
+        <DialogButton
+          disabled={busy || checking || !canUninstall}
+          className="ddu-uninstall"
+          onClick={() => {
+            if (!canUninstall || busy || checking) return;
+            const result = requestUninstallConfirmation(plugin.name, {
+              title: `${t("Uninstall plugin")}: ${plugin.name}`,
+              button: t("Uninstall"),
+              description: t("Do you want to uninstall this plugin?"),
+            });
+            setUninstallError(result.error || "");
+          }}
+        >
+          <span className="ddu-action-label">
+            <FaTrashAlt aria-hidden="true" />
+            {t("Uninstall")}
+          </span>
+        </DialogButton>
       </div>
+      {uninstallError && (
+        <p role="status" className="ddu-footnote">
+          {t(uninstallError)}
+        </p>
+      )}
       {actions.update && (
         <p className="ddu-footnote">{t("Developer source notice")}</p>
       )}

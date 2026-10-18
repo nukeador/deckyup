@@ -299,10 +299,13 @@ class Finder:
                 except Exception:
                     path.unlink(missing_ok=True)
                     raise
+                staged["install_type"] = "install"
+                staged = self.updater.security.register(staged, updating=False)
             ticket = os.urandom(24).hex()
-            self.pending[ticket] = {**record, "root": root}
+            self.pending[ticket] = {**record, "root": root, "review_token": staged["review_token"]}
             while len(self.pending) > 10:
-                del self.pending[next(iter(self.pending))]
+                old = self.pending.pop(next(iter(self.pending)))
+                self.updater.security.discard(old["review_token"])
             return {**staged, "install_type": selection["status"], "ticket": ticket}
 
     def finish(self, ticket, cancelled=False):
@@ -312,8 +315,11 @@ class Finder:
                 return {"installed": False}
             if cancelled or time.time() - record["time"] > 21600:
                 self.pending.pop(ticket, None)
+                self.updater.security.discard(record["review_token"])
                 return {"installed": False}
             expected = record["selection"]
+            if not self.updater.security.was_authorized(record["review_token"]):
+                return {"installed": False}
             matches = [
                 p for p in self.updater.list_plugins() if p["name"] == expected["project"]["name"]
             ]
@@ -333,4 +339,5 @@ class Finder:
                 return {"installed": False}
             self.updater.discovery.save(plugin, record["repository"], "confirmed")
             self.pending.pop(ticket, None)
+            self.updater.security.discard(record["review_token"])
             return {"installed": True}
