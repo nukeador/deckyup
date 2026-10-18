@@ -277,7 +277,7 @@ class Pages(unittest.TestCase):
                 "https://www.youtube.com/watch?v=Ze1cUR-MSyg"
                 f"&hl={tag}&cc_lang_pref={tag}&cc_load_policy=1"
             )
-            self.assertEqual(document.links.count(video_url), 2)
+            self.assertEqual(document.links.count(video_url), 1)
             self.assertEqual(markup.count('class="video-preview"'), 1)
             self.assertNotIn("<iframe", markup)
             self.assertIn(html.escape(translations[code]["video_heading"]), markup)

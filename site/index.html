@@ -54,9 +54,9 @@
       })();
     </script>
     <!-- End Matomo Code -->
-    <link rel="stylesheet" href="{{prefix}}styles.css?v=community-video-1" />
+    <link rel="stylesheet" href="{{prefix}}styles.css?v=community-video-3" />
     <script
-      src="{{prefix}}script.js?v=community-video-1"
+      src="{{prefix}}script.js?v=community-video-3"
       type="module"
     ></script>
   </head>
@@ -124,10 +124,11 @@
           <p>{{updates_text}}</p>
           <figure class="community-video">
             <h3>{{video_heading}}</h3>
-            <a
+            <button
+              type="button"
               class="video-preview"
-              href="https://www.youtube.com/watch?v=Ze1cUR-MSyg&amp;hl={{lang}}&amp;cc_lang_pref={{lang}}&amp;cc_load_policy=1"
-              aria-label="{{video_watch}} — Gaming On Steam"
+              data-video-play
+              aria-label="{{video_heading}} — Gaming On Steam"
             >
               <img
                 data-video-thumbnail
@@ -138,7 +139,7 @@
                 loading="lazy"
               />
               <span class="video-play" aria-hidden="true">▶</span>
-            </a>
+            </button>
             <figcaption>
               {{video_by}} Gaming On Steam ·
               <a
@@ -226,10 +227,6 @@
         <div>
           <h2 id="features-heading">{{find_title}}</h2>
           <p class="feature-intro">{{find_text}}</p>
-          <div class="developers">
-            <h2 id="developers-heading">{{developers_title}}</h2>
-            <p>{{developers_text}}</p>
-          </div>
         </div>
         <figure class="find-screenshot">
           <a
@@ -244,6 +241,10 @@
           /></a>
           <figcaption>{{find_caption}}</figcaption>
         </figure>
+        <div class="developers">
+          <h2 id="developers-heading">{{developers_title}}</h2>
+          <p>{{developers_text}}</p>
+        </div>
         <p class="trust-note">{{trust}}</p>
       </section>
     </main>

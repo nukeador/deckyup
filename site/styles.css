@@ -451,6 +451,10 @@ figcaption {
   gap: 32px 56px;
   align-items: start;
 }
+.find-screenshot {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
 .find-screenshot img {
   width: 100%;
   height: auto;
@@ -459,7 +463,7 @@ figcaption {
   border-radius: 4px;
 }
 .developers {
-  margin-top: 32px;
+  margin-top: 0;
 }
 .developers p {
   color: var(--secondary);
@@ -497,6 +501,8 @@ html:lang(ko) {
     gap: 26px;
   }
   .find-screenshot {
+    grid-column: auto;
+    grid-row: auto;
     width: min(100%, 260px);
   }
 }
@@ -508,13 +514,22 @@ html:lang(ko) {
 .community-video h3 {
   margin-bottom: 12px;
 }
-.video-preview {
+.video-preview,
+.video-player {
+  width: 100%;
+  padding: 0;
   position: relative;
   display: block;
   aspect-ratio: 16 / 9;
   background: var(--surface);
   border: 1px solid var(--divider);
   border-radius: 4px;
+}
+.video-preview {
+  cursor: pointer;
+}
+.video-player {
+  display: block;
 }
 .video-preview img {
   display: block;
