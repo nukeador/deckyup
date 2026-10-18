@@ -54,11 +54,8 @@
       })();
     </script>
     <!-- End Matomo Code -->
-    <link rel="stylesheet" href="{{prefix}}styles.css?v=community-video-3" />
-    <script
-      src="{{prefix}}script.js?v=community-video-3"
-      type="module"
-    ></script>
+    <link rel="stylesheet" href="{{prefix}}styles.css?v=lightbox-1" />
+    <script src="{{prefix}}script.js?v=lightbox-1" type="module"></script>
   </head>
   <body
     data-copy-label="{{copied}}"
@@ -128,6 +125,7 @@
               type="button"
               class="video-preview"
               data-video-play
+              data-captions="{{prefix}}captions/{{lang}}.json"
               aria-label="{{video_heading}} — Gaming On Steam"
             >
               <img
@@ -248,6 +246,37 @@
         <p class="trust-note">{{trust}}</p>
       </section>
     </main>
+    <dialog
+      id="video-dialog"
+      aria-labelledby="video-dialog-heading"
+      data-loading="{{video_loading}}"
+      data-ready="{{video_ready}}"
+      data-error="{{video_error}}"
+    >
+      <header class="video-dialog-header">
+        <h2 id="video-dialog-heading">{{video_heading}}</h2>
+        <div>
+          <button
+            type="button"
+            data-video-fullscreen
+            aria-label="{{video_fullscreen}}"
+          >
+            ⛶
+          </button>
+          <button type="button" data-video-close aria-label="{{video_close}}">
+            ×
+          </button>
+        </div>
+      </header>
+      <div class="video-stage"></div>
+      <p class="video-caption" aria-live="off"></p>
+      <footer class="video-dialog-footer">
+        <span>{{video_subtitles}}</span>
+        <a href="https://www.youtube.com/watch?v=Ze1cUR-MSyg"
+          >{{video_watch}}</a
+        >
+      </footer>
+    </dialog>
     <footer class="site-footer wrap">
       <nav aria-label="{{project_links}}">
         <a

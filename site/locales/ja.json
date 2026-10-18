@@ -47,5 +47,11 @@
   "how_install": "インストール方法 →",
   "video_heading": "実際の動作を見る",
   "video_watch": "YouTube で見る",
-  "video_by": "動画制作："
+  "video_by": "動画制作：",
+  "video_close": "動画を閉じる",
+  "video_fullscreen": "動画を拡大",
+  "video_loading": "動画を読み込み中…",
+  "video_ready": "再生中に字幕が表示されます。",
+  "video_error": "動画または字幕を読み込めませんでした。YouTube で視聴できます。",
+  "video_subtitles": "独自の字幕 · Gaming On Steam の動画"
 }

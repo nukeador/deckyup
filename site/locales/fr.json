@@ -47,5 +47,11 @@
   "how_install": "Comment l’installer →",
   "video_heading": "Voir en action",
   "video_watch": "Voir sur YouTube",
-  "video_by": "Vidéo de"
+  "video_by": "Vidéo de",
+  "video_close": "Fermer la vidéo",
+  "video_fullscreen": "Agrandir la vidéo",
+  "video_loading": "Chargement de la vidéo…",
+  "video_ready": "Les sous-titres apparaissent pendant la lecture.",
+  "video_error": "Impossible de charger la vidéo ou les sous-titres. Voir sur YouTube.",
+  "video_subtitles": "Sous-titres indépendants · Vidéo de Gaming On Steam"
 }

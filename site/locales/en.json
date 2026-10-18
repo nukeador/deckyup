@@ -47,5 +47,11 @@
   "how_install": "How to install →",
   "video_heading": "See it in action",
   "video_watch": "Watch on YouTube",
-  "video_by": "Video by"
+  "video_by": "Video by",
+  "video_close": "Close video",
+  "video_fullscreen": "Expand video",
+  "video_loading": "Loading video…",
+  "video_ready": "Subtitles appear during playback.",
+  "video_error": "Video or subtitles could not load. You can watch on YouTube.",
+  "video_subtitles": "Independent subtitles · Gaming On Steam video"
 }

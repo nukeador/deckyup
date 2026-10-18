@@ -280,6 +280,15 @@ class Pages(unittest.TestCase):
             self.assertEqual(document.links.count(video_url), 1)
             self.assertEqual(markup.count('class="video-preview"'), 1)
             self.assertNotIn("<iframe", markup)
+            self.assertIn(f'data-captions="../captions/{tag}.json"', markup)
+            cues = json.loads((self.output / "captions" / f"{tag}.json").read_text())
+            self.assertEqual(len(cues), 30)
+            self.assertTrue(all(cue["text"].strip() for cue in cues))
+            for index, cue in enumerate(cues):
+                self.assertGreater(cue["end"], cue["start"])
+                if index:
+                    self.assertGreaterEqual(cue["start"], cues[index - 1]["end"])
+            self.assertIn('id="video-dialog"', markup)
             self.assertIn(html.escape(translations[code]["video_heading"]), markup)
             self.assertIn('href="../install.zip"', markup)
             self.assertIn('href="#install"', markup)

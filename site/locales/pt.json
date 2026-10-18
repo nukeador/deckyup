@@ -47,5 +47,11 @@
   "how_install": "Como instalar →",
   "video_heading": "Vê em ação",
   "video_watch": "Ver no YouTube",
-  "video_by": "Vídeo de"
+  "video_by": "Vídeo de",
+  "video_close": "Fechar vídeo",
+  "video_fullscreen": "Ampliar vídeo",
+  "video_loading": "A carregar vídeo…",
+  "video_ready": "As legendas aparecem durante a reprodução.",
+  "video_error": "Não foi possível carregar o vídeo ou as legendas. Podes ver no YouTube.",
+  "video_subtitles": "Legendas independentes · Vídeo de Gaming On Steam"
 }

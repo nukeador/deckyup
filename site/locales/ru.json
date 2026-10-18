@@ -47,5 +47,11 @@
   "how_install": "Как установить →",
   "video_heading": "Посмотрите в действии",
   "video_watch": "Смотреть на YouTube",
-  "video_by": "Видео от"
+  "video_by": "Видео от",
+  "video_close": "Закрыть видео",
+  "video_fullscreen": "Увеличить видео",
+  "video_loading": "Загрузка видео…",
+  "video_ready": "Субтитры появятся при воспроизведении.",
+  "video_error": "Не удалось загрузить видео или субтитры. Можно посмотреть на YouTube.",
+  "video_subtitles": "Независимые субтитры · Видео Gaming On Steam"
 }

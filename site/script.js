@@ -1,3 +1,4 @@
+import { setupVideo } from "./video.js?v=lightbox-1";
 import { preferredLocale } from "./language.js";
 
 const languageSelect = document.getElementById("language-select");
@@ -76,22 +77,4 @@ if (videoThumbnail) {
   if (videoThumbnail.complete && videoThumbnail.naturalWidth < 320) fallback();
 }
 
-const videoPlay = document.querySelector("[data-video-play]");
-videoPlay?.addEventListener("click", () => {
-  const player = document.createElement("iframe");
-  const url = new URL("https://www.youtube-nocookie.com/embed/Ze1cUR-MSyg");
-  url.search = new URLSearchParams({
-    hl: document.documentElement.lang,
-    cc_lang_pref: document.documentElement.lang,
-    cc_load_policy: "1",
-    autoplay: "0",
-  });
-  player.src = url.href;
-  player.className = "video-player";
-  player.title = videoPlay.getAttribute("aria-label");
-  player.allow = "encrypted-media; picture-in-picture; fullscreen";
-  player.allowFullscreen = true;
-  player.referrerPolicy = "strict-origin-when-cross-origin";
-  videoPlay.replaceWith(player);
-  player.focus();
-});
+setupVideo();

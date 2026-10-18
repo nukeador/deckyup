@@ -514,8 +514,7 @@ html:lang(ko) {
 .community-video h3 {
   margin-bottom: 12px;
 }
-.video-preview,
-.video-player {
+.video-preview {
   width: 100%;
   padding: 0;
   position: relative;
@@ -527,9 +526,6 @@ html:lang(ko) {
 }
 .video-preview {
   cursor: pointer;
-}
-.video-player {
-  display: block;
 }
 .video-preview img {
   display: block;
@@ -555,4 +551,154 @@ html:lang(ko) {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+}
+
+html.video-open {
+  overflow: hidden;
+}
+#video-dialog {
+  width: min(960px, calc(100% - 32px), calc((100dvh - 270px) * 16 / 9));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--text);
+  overflow: auto;
+}
+#video-dialog::backdrop {
+  background: #080b0eef;
+}
+.video-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+}
+.video-dialog-header h2 {
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+}
+.video-dialog-header > div {
+  display: flex;
+}
+.video-dialog-header button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+.video-stage {
+  width: 100%;
+  min-width: 0;
+  min-height: 200px;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.video-stage iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.video-caption {
+  min-height: 5.4em;
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.video-dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 20px;
+  padding: 0 16px 8px;
+  font-size: 0.7rem;
+  color: var(--secondary);
+}
+.video-dialog-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+#video-dialog:fullscreen {
+  width: 100%;
+  max-height: 100%;
+  height: 100%;
+  border: 0;
+}
+#video-dialog:fullscreen .video-stage {
+  max-height: calc(100dvh - 210px);
+}
+@media (max-width: 600px) {
+  #video-dialog {
+    width: 100%;
+    max-height: 100dvh;
+    border-inline: 0;
+  }
+  .video-dialog-header {
+    padding-inline: 12px;
+  }
+  .video-caption {
+    padding: 16px 20px;
+    min-height: 7em;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  #video-dialog[open] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: min(1100px, calc(100% - 16px), calc((100dvh - 110px) * 16 / 9));
+    max-height: calc(100dvh - 16px);
+  }
+  .video-dialog-header {
+    grid-area: 1 / 1;
+    padding-block: 0;
+  }
+  .video-stage {
+    grid-area: 2 / 1;
+  }
+  .video-caption {
+    grid-area: 2 / 1;
+    align-self: end;
+    justify-self: center;
+    z-index: 1;
+    width: fit-content;
+    max-width: 88%;
+    min-height: 0;
+    margin-bottom: 48px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    background: #000d;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+  .video-caption:empty {
+    visibility: hidden;
+  }
+  .video-dialog-footer {
+    grid-area: 3 / 1;
+    padding-block: 0;
+  }
+  #video-dialog:fullscreen {
+    width: 100%;
+  }
+  #video-dialog:fullscreen .video-stage {
+    height: calc(100dvh - 110px);
+  }
 }

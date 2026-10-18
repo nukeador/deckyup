@@ -47,5 +47,11 @@
   "how_install": "Jak zainstalować →",
   "video_heading": "Zobacz w działaniu",
   "video_watch": "Obejrzyj na YouTube",
-  "video_by": "Film autorstwa"
+  "video_by": "Film autorstwa",
+  "video_close": "Zamknij film",
+  "video_fullscreen": "Powiększ film",
+  "video_loading": "Ładowanie filmu…",
+  "video_ready": "Napisy pojawią się podczas odtwarzania.",
+  "video_error": "Nie udało się wczytać filmu lub napisów. Obejrzyj na YouTube.",
+  "video_subtitles": "Niezależne napisy · Film Gaming On Steam"
 }

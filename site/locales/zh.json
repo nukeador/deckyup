@@ -47,5 +47,11 @@
   "how_install": "安装方法 →",
   "video_heading": "看看实际效果",
   "video_watch": "在 YouTube 上观看",
-  "video_by": "视频作者："
+  "video_by": "视频作者：",
+  "video_close": "关闭视频",
+  "video_fullscreen": "放大视频",
+  "video_loading": "正在加载视频…",
+  "video_ready": "播放时显示字幕。",
+  "video_error": "无法加载视频或字幕。你可以在 YouTube 上观看。",
+  "video_subtitles": "独立字幕 · Gaming On Steam 视频"
 }

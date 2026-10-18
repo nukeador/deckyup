@@ -47,5 +47,11 @@
   "how_install": "설치 방법 →",
   "video_heading": "실제 작동 모습",
   "video_watch": "YouTube에서 보기",
-  "video_by": "영상 제작:"
+  "video_by": "영상 제작:",
+  "video_close": "동영상 닫기",
+  "video_fullscreen": "동영상 확대",
+  "video_loading": "동영상 불러오는 중…",
+  "video_ready": "재생 중 자막이 표시됩니다.",
+  "video_error": "동영상 또는 자막을 불러오지 못했습니다. YouTube에서 볼 수 있습니다.",
+  "video_subtitles": "독립 자막 · Gaming On Steam 동영상"
 }

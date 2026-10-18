@@ -1,0 +1,152 @@
+[
+  {
+    "start": 0.08,
+    "end": 4.32,
+    "text": "Salut ! Le développeur de ce plugin m'a contacté par e-mail."
+  },
+  {
+    "start": 4.32,
+    "end": 9.6,
+    "text": "Il est tellement bien que je l'utilise sans arrêt et devais vous le montrer en vidéo."
+  },
+  {
+    "start": 9.6,
+    "end": 16.4,
+    "text": "Il s'appelle Decky Direct Updater. Si vous utilisez des plugins Decky Loader"
+  },
+  {
+    "start": 16.4,
+    "end": 20.72,
+    "text": "qui ne viennent pas de la Store officielle, vous savez combien il peut être pénible"
+  },
+  {
+    "start": 20.72,
+    "end": 25.92,
+    "text": "de les mettre à jour. Ce plugin s'en charge pour vous."
+  },
+  {
+    "start": 25.92,
+    "end": 30.56,
+    "text": "Il trouve les dépôts Git, vérifie les dernières versions et les installe"
+  },
+  {
+    "start": 30.56,
+    "end": 35.84,
+    "text": "directement dans Decky Loader depuis le mode Jeu. Vous pouvez ainsi"
+  },
+  {
+    "start": 35.84,
+    "end": 40.72,
+    "text": "garder vos plugins Decky Loader officiels et non officiels"
+  },
+  {
+    "start": 40.72,
+    "end": 44.88,
+    "text": "à jour d'un clic. Pour l'installer,"
+  },
+  {
+    "start": 44.88,
+    "end": 49.6,
+    "text": "passez en mode Bureau depuis le menu d'alimentation. C'est aussi possible"
+  },
+  {
+    "start": 49.6,
+    "end": 53.2,
+    "text": "en mode Jeu si vous avez un navigateur pour récupérer la commande,"
+  },
+  {
+    "start": 53.2,
+    "end": 57.36,
+    "text": "ou la copier-coller dans Decky Loader, comme vous allez le voir."
+  },
+  {
+    "start": 57.36,
+    "end": 64.72,
+    "text": "Ouvrez deckyup.nukeador.com. Descendez et copiez le lien d'installation de Direct Updater."
+  },
+  {
+    "start": 64.72,
+    "end": 69.52,
+    "text": "Copiez-le dans le presse-papiers, puis ouvrez le mode Big Picture"
+  },
+  {
+    "start": 69.52,
+    "end": 74.32,
+    "text": "sur le bureau. Sinon, les plugins Decky Loader ne sont pas accessibles"
+  },
+  {
+    "start": 74.32,
+    "end": 78.56,
+    "text": "en mode Bureau. Cela évite de repasser en mode Jeu. Ouvrez"
+  },
+  {
+    "start": 78.56,
+    "end": 83.68,
+    "text": "les paramètres de Decky Loader. Vérifiez que le mode développeur est activé"
+  },
+  {
+    "start": 83.68,
+    "end": 88.56,
+    "text": "dans Général. Puis, dans le menu Développeur, collez l'URL dans"
+  },
+  {
+    "start": 88.56,
+    "end": 96.32,
+    "text": "Installer un plugin depuis une URL et cliquez sur Installer. Voilà !"
+  },
+  {
+    "start": 96.32,
+    "end": 101.6,
+    "text": "Vous avez maintenant un outil de mise à jour des plugins. J'ai aussi trouvé"
+  },
+  {
+    "start": 101.6,
+    "end": 105.92,
+    "text": "beaucoup de mises à jour de plugins officiels qui ne sont pas encore"
+  },
+  {
+    "start": 105.92,
+    "end": 110,
+    "text": "arrivées dans Decky Loader. Vous pouvez suivre les dernières versions de leurs dépôts"
+  },
+  {
+    "start": 110,
+    "end": 115.12,
+    "text": "Git. C'est formidable pour tout le monde, et encore plus"
+  },
+  {
+    "start": 115.12,
+    "end": 119.04,
+    "text": "pour les développeurs de plugins : dès qu'une mise à jour est publiée"
+  },
+  {
+    "start": 119.04,
+    "end": 123.6,
+    "text": "dans votre dépôt, actualisez ici pour l'installer directement,"
+  },
+  {
+    "start": 123.6,
+    "end": 130.88,
+    "text": "sans manipuler d'URL. Une mise à jour de Decky"
+  },
+  {
+    "start": 130.88,
+    "end": 134.96,
+    "text": "Multiframe Gen pourrait arriver bientôt, mais j'en reparlerai. Dites-nous"
+  },
+  {
+    "start": 134.96,
+    "end": 137.92,
+    "text": "en commentaire quels autres plugins Decky Loader vous intéressent."
+  },
+  {
+    "start": 137.92,
+    "end": 143.52,
+    "text": "Une autre vidéo sur les meilleurs plugins Decky Loader arrive"
+  },
+  {
+    "start": 143.52,
+    "end": 146.52,
+    "text": "bientôt."
+  }
+]
