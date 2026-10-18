@@ -1,3 +1,1 @@
-- Fix the stale panel after self-updating: clear Loader’s selected plugin, then select its newly registered instance before reopening Quick Access. Closing Quick Access alone left the old plugin object selected.
-- Keep the handoff pending until Loader has registered the expected version and the new panel has been selected. Preserve native installation confirmation and installed-version verification.
-- Validate self-update session data and cover old/new panel references with regression tests. The selection fix was also checked against the stale 0.2.1 panel on a Steam Deck with 0.2.2 already installed.
+- Publish the same corrected plugin code as v0.2.1 with v0.2.2 version metadata, so the native 0.2.1 → 0.2.2 self-update and panel replacement can be tested against real GitHub releases. No additional plugin behavior changes.
