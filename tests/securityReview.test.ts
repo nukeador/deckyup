@@ -769,3 +769,69 @@ test("security review restores focus across the SharedJSContext and Quick Access
   shared.window.close();
   qam.window.close();
 });
+
+test("Find Plugins translates backend compatibility errors into the Steam UI language", async () => {
+  const { FindPlugins } = await import("../src/FindPlugins");
+  const { createFindStore } = await import("../src/findStore");
+  const { LanguageProvider } = await import("../src/i18n");
+  const previousSteam = (globalThis as unknown as { SteamClient?: unknown })
+    .SteamClient;
+  const dom = new JSDOM("<div id='root'></div>", { pretendToBeVisual: true });
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    HTMLElement: dom.window.HTMLElement,
+    IS_REACT_ACT_ENVIRONMENT: true,
+    SteamClient: { Settings: { GetCurrentLanguage: async () => "spanish" } },
+  });
+  const row = {
+    repository: "ValentineBSAA/ResonaDeck",
+    name: "ResonaDeck",
+    owner: "ValentineBSAA",
+    stars: 1,
+    description: "",
+    fork: false,
+    archived: false,
+    disabled: false,
+  };
+  const store = createFindStore(async () => ({ results: [row], direct: true }));
+  store.type(row.repository);
+  await store.submit();
+  const root = createRoot(document.getElementById("root")!);
+  try {
+    await act(async () => {
+      root.render(
+        createElement(LanguageProvider, {
+          children: createElement(FindPlugins, {
+            open: true,
+            store,
+            onBack() {},
+            details: async () => ({
+              ...row,
+              status: "unavailable",
+              error: "No compatible Decky release found.",
+            }),
+            install: async () => {
+              assert.fail("incompatible result must not install");
+            },
+            checkInstallation: async () => false,
+            cancelInstallation: async () => {},
+          }),
+        }),
+      );
+    });
+    assert.ok(
+      document.body.textContent?.includes(
+        "No se ha podido identificar un ZIP instalable de Decky.",
+      ),
+    );
+    assert.equal(
+      document.body.textContent?.includes("No compatible Decky release found."),
+      false,
+    );
+  } finally {
+    await act(async () => root.unmount());
+    dom.window.close();
+    Object.assign(globalThis, { SteamClient: previousSteam });
+  }
+});

@@ -205,7 +205,7 @@ export function FindPlugins({
         </div>
         {state.error && (
           <div role="status" className="ddu-notice">
-            {state.error}
+            {t(state.error)}
           </div>
         )}
         <NavigationGroup
@@ -284,7 +284,7 @@ export function FindPlugins({
               )}
             </dl>
           )}
-          {detail?.error && <p role="status">{detail.error}</p>}
+          {detail?.error && <p role="status">{t(detail.error)}</p>}
           {message && (
             <p className="ddu-detail-status" role="status">
               {t(message)}

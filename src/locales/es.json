@@ -46,7 +46,7 @@
   "Not checked": "Sin comprobar",
   "Check failed": "Error al comprobar",
   "No stable GitHub release": "Sin versión estable en GitHub",
-  "No compatible release": "Sin versión compatible",
+  "No compatible release": "ZIP instalable no identificado",
   "Ambiguous release": "Versión ambigua",
   "Version unavailable": "Versión no disponible",
   "Details": "Detalles",
@@ -136,5 +136,6 @@
   "I understand it will have administrator access.": "Entiendo que tendrá acceso de administrador.",
   "Decky will download additional executable files.": "Decky descargará archivos ejecutables adicionales.",
   "Installed access is unknown; changes cannot be compared.": "Se desconoce el acceso instalado; no se pueden comparar los cambios.",
-  "Continue": "Continuar"
+  "Continue": "Continuar",
+  "No compatible Decky release found.": "No se ha podido identificar un ZIP instalable de Decky."
 }

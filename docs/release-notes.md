@@ -1,1 +1,3 @@
-- Publish the same corrected code as v0.2.1 with v0.2.2 version metadata for the real self-update test, including recovery after repeated same-version frontend loads. No additional plugin behavior changes.
+- Recognize release ZIPs with packaging suffixes such as `ResonaDeck-1.2.0-Stable.zip` while preserving validated plugin identity and version checks.
+- Exclude clearly marked prerelease ZIPs from automatic stable updates.
+- Show localized compatibility errors in Find Plugins across the ten supported languages.

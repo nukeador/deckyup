@@ -46,7 +46,7 @@
   "Not checked": "Nie sprawdzono",
   "Check failed": "Błąd sprawdzania",
   "No stable GitHub release": "Brak stabilnego wydania GitHub",
-  "No compatible release": "Brak zgodnego wydania",
+  "No compatible release": "Nie zidentyfikowano ZIP-a do instalacji",
   "Ambiguous release": "Niejednoznaczne wydanie",
   "Version unavailable": "Wersja niedostępna",
   "Details": "Szczegóły",
@@ -136,5 +136,6 @@
   "I understand it will have administrator access.": "Rozumiem, że uzyska dostęp administratora.",
   "Decky will download additional executable files.": "Decky pobierze dodatkowe pliki wykonywalne.",
   "Installed access is unknown; changes cannot be compared.": "Obecne uprawnienia są nieznane; nie można porównać zmian.",
-  "Continue": "Kontynuuj"
+  "Continue": "Kontynuuj",
+  "No compatible Decky release found.": "Nie udało się zidentyfikować pliku ZIP do instalacji w Decky."
 }

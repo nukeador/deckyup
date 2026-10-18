@@ -46,7 +46,7 @@
   "Not checked": "未確認",
   "Check failed": "確認に失敗",
   "No stable GitHub release": "安定版のGitHubリリースなし",
-  "No compatible release": "互換リリースなし",
+  "No compatible release": "インストール可能なZIPを特定できません",
   "Ambiguous release": "リリースを特定できません",
   "Version unavailable": "バージョンを取得できません",
   "Details": "詳細",
@@ -136,5 +136,6 @@
   "I understand it will have administrator access.": "管理者権限が付与されることを理解しました。",
   "Decky will download additional executable files.": "Deckyが追加の実行ファイルをダウンロードします。",
   "Installed access is unknown; changes cannot be compared.": "現在の権限が不明なため、変更を比較できません。",
-  "Continue": "続行"
+  "Continue": "続行",
+  "No compatible Decky release found.": "インストール可能なDecky ZIPを特定できませんでした。"
 }

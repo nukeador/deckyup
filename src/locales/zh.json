@@ -46,7 +46,7 @@
   "Not checked": "未检查",
   "Check failed": "检查失败",
   "No stable GitHub release": "没有稳定的 GitHub 版本",
-  "No compatible release": "没有兼容版本",
+  "No compatible release": "未确定可安装的 ZIP 文件",
   "Ambiguous release": "版本不明确",
   "Version unavailable": "版本不可用",
   "Details": "详情",
@@ -136,5 +136,6 @@
   "I understand it will have administrator access.": "我理解它将获得管理员权限。",
   "Decky will download additional executable files.": "Decky 将下载额外的可执行文件。",
   "Installed access is unknown; changes cannot be compared.": "无法确定当前权限，因此无法比较变化。",
-  "Continue": "继续"
+  "Continue": "继续",
+  "No compatible Decky release found.": "无法确定可安装的 Decky ZIP 文件。"
 }

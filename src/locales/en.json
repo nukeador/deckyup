@@ -46,7 +46,7 @@
   "Not checked": "Not checked",
   "Check failed": "Check failed",
   "No stable GitHub release": "No stable GitHub release",
-  "No compatible release": "No compatible release",
+  "No compatible release": "No installable ZIP identified",
   "Ambiguous release": "Ambiguous release",
   "Version unavailable": "Version unavailable",
   "Details": "Details",
@@ -136,5 +136,6 @@
   "I understand it will have administrator access.": "I understand it will have administrator access.",
   "Decky will download additional executable files.": "Decky will download additional executable files.",
   "Installed access is unknown; changes cannot be compared.": "Installed access is unknown; changes cannot be compared.",
-  "Continue": "Continue"
+  "Continue": "Continue",
+  "No compatible Decky release found.": "Could not identify an installable Decky ZIP."
 }

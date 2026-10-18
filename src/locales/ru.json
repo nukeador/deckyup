@@ -46,7 +46,7 @@
   "Not checked": "Не проверено",
   "Check failed": "Ошибка проверки",
   "No stable GitHub release": "Нет стабильного релиза GitHub",
-  "No compatible release": "Нет совместимого релиза",
+  "No compatible release": "ZIP для установки не определён",
   "Ambiguous release": "Неоднозначный релиз",
   "Version unavailable": "Версия недоступна",
   "Details": "Подробности",
@@ -136,5 +136,6 @@
   "I understand it will have administrator access.": "Я понимаю, что он получит права администратора.",
   "Decky will download additional executable files.": "Decky загрузит дополнительные исполняемые файлы.",
   "Installed access is unknown; changes cannot be compared.": "Текущие права неизвестны; сравнить изменения невозможно.",
-  "Continue": "Продолжить"
+  "Continue": "Продолжить",
+  "No compatible Decky release found.": "Не удалось определить ZIP для установки через Decky."
 }

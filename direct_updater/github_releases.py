@@ -317,9 +317,10 @@ def _identity(value):
 def _matches_asset(plugin, filename, tag):
     if not filename.lower().endswith(".zip"):
         return False
-    stem = re.sub(r"(?:[-_]?v)?\d+\.\d+(?:\.\d+)?(?:[-+].*)?$", "", filename[:-4], flags=re.I)
+    stem = re.sub(r"(?:[-_]?v)?\d+\.\d+(?:\.\d+)?(?:[-+_ ].*)?$", "", filename[:-4], flags=re.I)
     words = set(re.findall(r"[a-z0-9]+", stem.lower()))
-    if words & {"source", "src", "sources", "sourcecode", "master", "main"}:
+    filename_words = set(re.findall(r"[a-z0-9]+", filename[:-4].lower()))
+    if filename_words & {"source", "src", "sources", "sourcecode", "master", "main"}:
         return False
     identities = {_identity(plugin["name"]), _identity(plugin.get("package_name", ""))} - {""}
     asset_identity = _identity(stem)
@@ -333,6 +334,24 @@ def _matches_asset(plugin, filename, tag):
         and not (words & {"decky", "plugin"} or tag.lower().startswith("plugin-"))
     ):
         return False
+    return True
+
+
+def _asset_versions_match(filename, version):
+    embedded = re.findall(r"(\d+\.\d+(?:\.\d+)?)(?:[-_ +]([0-9A-Za-z._+-]+))?", filename[:-4])
+    for core, suffix in embedded:
+        if version.pre:
+            if Version(core + ("-" + suffix if suffix else "")) != version:
+                return False
+        else:
+            # Suffixes describe packaging as well as channels. Tags and archive
+            # manifests remain authoritative; clear prerelease hints still fail closed.
+            if Version(core) != version or re.search(
+                r"(?:^|[._-])(?:alpha|beta|rc|pre|preview|dev|nightly|canary|experimental|snapshot|unstable|testing)(?:$|[.\d_-])",
+                suffix,
+                re.I,
+            ):
+                return False
     return True
 
 
@@ -353,10 +372,8 @@ def compatible_releases(plugin, releases, allow_prerelease=False):
             name = asset.get("name", "")
             if not _matches_asset(plugin, name, release.get("tag_name", "")):
                 continue
-            # Asset versions, when supplied, must agree with the release tag.
-            embedded = re.findall(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?", name.removesuffix(".zip"))
             try:
-                if embedded and any(Version(value) != version for value in embedded):
+                if not _asset_versions_match(name, version):
                     continue
             except ValueError:
                 continue
