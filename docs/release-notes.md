@@ -1,3 +1,1 @@
-- Replace Loader’s stale selected panel after self-updates, instead of only closing and reopening Quick Access.
-- Identify the exact frontend instance as well as its version. Recover the active panel if Loader registers the same version again after the original handoff, preventing a disposed view from remaining stuck on “Checking for updates”.
-- Preserve native confirmation, installed-version verification and the user’s focus on other plugins. Add regression coverage for repeated same-version registration; verify the stale-panel repair against the running Steam Deck UI.
+- Publish the same corrected code as v0.2.1 with v0.2.2 version metadata for the real self-update test, including recovery after repeated same-version frontend loads. No additional plugin behavior changes.
