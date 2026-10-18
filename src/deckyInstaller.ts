@@ -77,10 +77,12 @@ const moduleFrontend: SelfUpdateFrontend = {
 interface LoaderPanelPlugin {
   name: string;
   version?: string;
+  content?: { key?: string | null };
 }
 interface LoaderPanelState {
   plugins: LoaderPanelPlugin[];
   deckyState: {
+    publicState(): { activePlugin: LoaderPanelPlugin | null };
     closeActivePlugin(): void;
     setActivePlugin(name: string): void;
   };
@@ -93,16 +95,30 @@ export function selfUpdatePanel(
     ? undefined
     : (window as unknown as { DeckyPluginLoader?: LoaderPanelState })
         .DeckyPluginLoader,
+  instance?: string,
 ) {
+  const replacement = () =>
+    loader?.plugins.find((plugin) => plugin.name === SELF_NAME);
   const available = () =>
     Array.isArray(loader?.plugins) &&
     loader.plugins.some(
-      (plugin) => plugin.name === SELF_NAME && plugin.version === version,
+      (plugin) =>
+        plugin.name === SELF_NAME &&
+        plugin.version === version &&
+        (instance === undefined || plugin.content?.key === instance),
     ) &&
+    typeof loader.deckyState?.publicState === "function" &&
     typeof loader.deckyState?.closeActivePlugin === "function" &&
     typeof loader.deckyState?.setActivePlugin === "function";
   if (!available()) return null;
   return {
+    stale() {
+      if (!available()) return false;
+      const active = loader!.deckyState.publicState().activePlugin;
+      return (
+        active?.name === SELF_NAME && active.content !== replacement()?.content
+      );
+    },
     close() {
       if (!available()) return false;
       loader!.deckyState.closeActivePlugin();
@@ -110,8 +126,13 @@ export function selfUpdatePanel(
     },
     select() {
       if (!available()) return false;
+      const active = loader!.deckyState.publicState().activePlugin;
+      if (active && active.name !== SELF_NAME) return false;
       loader!.deckyState.setActivePlugin(SELF_NAME);
-      return true;
+      return (
+        loader!.deckyState.publicState().activePlugin?.content ===
+        replacement()?.content
+      );
     },
   };
 }
@@ -157,57 +178,66 @@ export async function reopenAfterSelfUpdate(
   isActive: () => boolean = () => true,
 ): Promise<void> {
   const storage = session();
-  const raw = storage?.getItem(SELF_REOPEN_KEY);
-  if (!raw || !storage) return;
-  let pending: { version: string; created: number; requester?: string } | null;
-  try {
-    pending = JSON.parse(raw);
-  } catch {
-    storage.removeItem(SELF_REOPEN_KEY);
-    return;
+  const raw = storage?.getItem(SELF_REOPEN_KEY) ?? null;
+  let targetVersion = frontend.version;
+  if (raw) {
+    let pending: {
+      version: string;
+      created: number;
+      requester?: string;
+    } | null;
+    try {
+      pending = JSON.parse(raw);
+    } catch {
+      storage?.removeItem(SELF_REOPEN_KEY);
+      return;
+    }
+    if (
+      !pending ||
+      typeof pending.version !== "string" ||
+      !pending.version ||
+      typeof pending.created !== "number" ||
+      !Number.isFinite(pending.created) ||
+      (pending.requester !== undefined &&
+        typeof pending.requester !== "string") ||
+      Date.now() - pending.created > REOPEN_EXPIRY ||
+      Date.now() < pending.created
+    ) {
+      storage?.removeItem(SELF_REOPEN_KEY);
+      return;
+    }
+    if (
+      pending.version !== frontend.version ||
+      pending.requester === frontend.instance
+    )
+      return;
+    targetVersion = pending.version;
   }
-  if (
-    !pending ||
-    typeof pending.version !== "string" ||
-    !pending.version ||
-    typeof pending.created !== "number" ||
-    !Number.isFinite(pending.created) ||
-    (pending.requester !== undefined &&
-      typeof pending.requester !== "string") ||
-    Date.now() - pending.created > REOPEN_EXPIRY ||
-    Date.now() < pending.created
-  ) {
-    storage.removeItem(SELF_REOPEN_KEY);
-    return;
-  }
-  // Disk inventory can change before Loader replaces the running frontend.
-  // Only the replacement mount may consume the marker and reopen its fresh view.
-  if (
-    pending.version !== frontend.version ||
-    pending.requester === frontend.instance ||
-    !isActive()
-  )
-    return;
+  if (!isActive()) return;
   try {
+    const panel = selfUpdatePanel(targetVersion, undefined, frontend.instance);
+    // Loader may register the same version again after the original handoff completed.
+    if (!panel || (!raw && !panel.stale())) return;
     const plugins = await installed();
     if (
       !plugins.some(
         (plugin) =>
-          plugin.name === SELF_NAME && plugin.version === pending.version,
+          plugin.name === SELF_NAME && plugin.version === targetVersion,
       )
     )
       return;
-    if (!isActive() || storage.getItem(SELF_REOPEN_KEY) !== raw) return;
-    const panel = selfUpdatePanel(pending.version);
-    if (!panel?.close()) return;
+    if (!isActive() || (storage?.getItem(SELF_REOPEN_KEY) ?? null) !== raw)
+      return;
+    if ((!raw && !panel.stale()) || !panel.close()) return;
     navigation.CloseSideMenus();
     // Let Loader render its cleared selection before selecting the replacement.
     setTimeout(() => {
-      if (!isActive() || storage.getItem(SELF_REOPEN_KEY) !== raw) return;
+      if (!isActive() || (storage?.getItem(SELF_REOPEN_KEY) ?? null) !== raw)
+        return;
       try {
         if (!panel.select()) return;
         navigation.OpenQuickAccessMenu(999);
-        if (storage.getItem(SELF_REOPEN_KEY) === raw)
+        if (raw && storage?.getItem(SELF_REOPEN_KEY) === raw)
           storage.removeItem(SELF_REOPEN_KEY);
       } catch {
         // Keep the handoff pending if Loader cannot select/open its new content yet.
@@ -227,7 +257,7 @@ export function watchSelfUpdate(
   let active = true;
   let checking = false;
   const check = async () => {
-    if (!active || checking || !session()?.getItem(SELF_REOPEN_KEY)) return;
+    if (!active || checking) return;
     checking = true;
     try {
       await reopenAfterSelfUpdate(

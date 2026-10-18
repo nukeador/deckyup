@@ -8,12 +8,12 @@ import {
   type Router,
 } from "../src/deckyInstaller";
 
-function loaderPanelFixture(version: string) {
-  type Plugin = { name: string; version: string; content: object };
+function loaderPanelFixture(version: string, instance = "replacement") {
+  type Plugin = { name: string; version: string; content: { key?: string } };
   const replacement: Plugin = {
     name: "Decky Direct Updater",
     version,
-    content: {},
+    content: { key: instance },
   };
   const plugins = [replacement];
   const deckyState = {
@@ -22,6 +22,9 @@ function loaderPanelFixture(version: string) {
       version: "previous",
       content: {},
     } as Plugin | null,
+    publicState() {
+      return { activePlugin: this.activePlugin };
+    },
     closeActivePlugin() {
       this.activePlugin = null;
     },
@@ -290,7 +293,7 @@ test("self-update ignores the old frontend even after files change, and preserve
     configurable: true,
     value: {
       sessionStorage: storage,
-      DeckyPluginLoader: loaderPanelFixture("0.2.1"),
+      DeckyPluginLoader: loaderPanelFixture("0.2.1", "new"),
     },
   });
   try {
@@ -460,4 +463,92 @@ test("self-update replaces Loader's cached active plugin only when the target is
     false,
     "do not select a different release if Loader changes during the handoff",
   );
+});
+
+test("a second same-version Loader registration repairs the stale view after the handoff marker is gone", async () => {
+  const previous = globalThis.window;
+  const values = new Map<string, string>();
+  const loader = loaderPanelFixture("0.2.2", "first");
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: {
+      DeckyPluginLoader: loader,
+      sessionStorage: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          values.set(key, value);
+        },
+        removeItem: (key: string) => {
+          values.delete(key);
+        },
+      },
+    },
+  });
+  try {
+    let inventories = 0;
+    let opens = 0;
+    const installed = async () => {
+      inventories++;
+      return [{ name: "Decky Direct Updater", version: "0.2.2" }];
+    };
+    const navigation = {
+      CloseSideMenus() {},
+      OpenQuickAccessMenu() {
+        opens++;
+      },
+    };
+    await requestSelfUpdate(
+      { ...update, name: "Decky Direct Updater", version: "0.2.2" },
+      async () => ({ requested: true }),
+      { version: "0.2.1", instance: "old" },
+    );
+    await reopenAfterSelfUpdate(installed, navigation, {
+      version: "0.2.2",
+      instance: "first",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal(values.size, 0);
+    const stale = loader.deckyState.activePlugin;
+    loader.plugins[0] = { ...loader.plugins[0], content: { key: "second" } };
+    await reopenAfterSelfUpdate(installed, navigation, {
+      version: "0.2.2",
+      instance: "first",
+    });
+    assert.equal(inventories, 1, "superseded same-version instance cannot act");
+    assert.equal(loader.deckyState.activePlugin, stale);
+    await reopenAfterSelfUpdate(installed, navigation, {
+      version: "0.2.2",
+      instance: "second",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    assert.equal(loader.deckyState.activePlugin, loader.plugins[0]);
+    assert.equal(opens, 2);
+    await reopenAfterSelfUpdate(installed, navigation, {
+      version: "0.2.2",
+      instance: "second",
+    });
+    assert.equal(
+      inventories,
+      2,
+      "healthy panel does not start more inventory/network work",
+    );
+    loader.deckyState.activePlugin = {
+      name: "Another plugin",
+      version: "1.0.0",
+      content: {},
+    };
+    await reopenAfterSelfUpdate(installed, navigation, {
+      version: "0.2.2",
+      instance: "second",
+    });
+    assert.equal(inventories, 2, "another plugin must not lose focus");
+  } finally {
+    if (previous === undefined)
+      delete (globalThis as { window?: Window }).window;
+    else
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previous,
+      });
+  }
 });

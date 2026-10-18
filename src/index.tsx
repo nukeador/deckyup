@@ -625,7 +625,7 @@ export default definePlugin(() => {
     name: "Decky Direct Updater",
     titleView: <div>Direct Updater</div>,
     content: (
-      <LanguageProvider>
+      <LanguageProvider key={frontend.instance}>
         <SecurityReviewBoundary installer={securityInstaller}>
           <Content
             store={store}

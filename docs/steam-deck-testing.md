@@ -197,3 +197,8 @@ Publication makes this path available; the real native completion and panel repl
 ### Confirmed stale-panel cause
 
 Hardware inspection found installed files and Loader’s registered plugin at 0.2.2 while Loader’s active plugin object still referenced 0.2.1. Clearing the active selection and selecting the registered replacement through Loader’s methods changed the visible screen from the pending update to “Todo actualizado”, without reinstalling or restarting Decky. This directly validates the selection repair; the complete native 0.2.1 → 0.2.2 installation sequence still needs a run with both corrected packages.
+
+
+### Repeated same-version registration
+
+A second hardware capture showed two different 0.2.2 instances: the registered store had completed its check, while the selected panel referenced a disposed store frozen with `checking=true`. The repair must compare content identity, not just the version string, and remain available after the initial handoff marker is consumed. Re-selecting the registered content restored “Todo actualizado”; registered, selected and displayed store references then matched. Regression tests cover a second registration, rejecting work from a superseded instance and preserving focus when another plugin is selected.
